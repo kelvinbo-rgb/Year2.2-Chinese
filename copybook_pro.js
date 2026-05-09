@@ -11,57 +11,51 @@ async function renderProCopybook() {
 
         const chars = lesson.chars.split('');
         for (const char of chars) {
-            const block = document.createElement('div');
-            block.className = 'char-practice-block';
+            const entry = document.createElement('div');
+            entry.className = 'char-entry';
 
-            // 2. 笔顺分解区域
-            const stepsDiv = document.createElement('div');
-            stepsDiv.className = 'stroke-order-steps';
-            block.appendChild(stepsDiv);
+            // 2. 笔顺分解行
+            const strokeRow = document.createElement('div');
+            strokeRow.className = 'stroke-order-row';
+            entry.appendChild(strokeRow);
 
-            // 3. 练习行：将 13 个列组合起来
+            // 3. 练习容器 (拼音+汉字)
+            const practiceContainer = document.createElement('div');
+            practiceContainer.className = 'practice-container';
+            
             const py = pinyinPro.pinyin(char);
-            const practiceRow = document.createElement('div');
-            practiceRow.className = 'practice-row';
-
             for (let i = 0; i < 13; i++) {
                 const column = document.createElement('div');
                 column.className = 'practice-column';
 
-                // 拼音格
-                const pyGrid = document.createElement('div');
-                pyGrid.className = 'py-grid' + (i === 0 ? '' : (i < 6 ? ' trace' : ' empty'));
-                pyGrid.textContent = py;
-                column.appendChild(pyGrid);
+                const pyBox = document.createElement('div');
+                pyBox.className = 'py-box' + (i === 0 ? '' : (i < 6 ? ' trace' : ' empty'));
+                pyBox.textContent = py;
+                column.appendChild(pyBox);
 
-                // 汉字格
-                const chGrid = document.createElement('div');
-                chGrid.className = 'tianzige' + (i === 0 ? '' : (i < 6 ? ' trace' : ' empty'));
+                const chBox = document.createElement('div');
+                chBox.className = 'ch-box' + (i === 0 ? '' : (i < 6 ? ' trace' : ' empty'));
                 const span = document.createElement('span');
                 span.textContent = char;
-                chGrid.appendChild(span);
-                column.appendChild(chGrid);
+                chBox.appendChild(span);
+                column.appendChild(chBox);
 
-                practiceRow.appendChild(column);
+                practiceContainer.appendChild(column);
             }
-            block.appendChild(practiceRow);
-
-            printArea.appendChild(block);
+            entry.appendChild(practiceContainer);
+            printArea.appendChild(entry);
 
             // 渲染笔顺
-            await drawStrokes(char, stepsDiv);
+            await drawStrokes(char, strokeRow);
         }
     }
-
-    // 4. 添加页码显示
-    addPageNumbers();
 }
 
 async function drawStrokes(char, target) {
     try {
         const data = await HanziWriter.loadCharacterData(char);
         const strokes = data.strokes;
-        const steps = Math.min(strokes.length, 16);
+        const steps = Math.min(strokes.length, 20); // 增加上限
 
         for (let i = 0; i < steps; i++) {
             const stepBox = document.createElement('div');
@@ -95,15 +89,6 @@ async function drawStrokes(char, target) {
     } catch (e) {
         console.error("笔顺加载失败:", char, e);
     }
-}
-
-function addPageNumbers() {
-    // 简单的页码方案：在末尾添加页脚提示
-    const footer = document.createElement('div');
-    footer.className = 'page-footer';
-    // 在真正的打印中，我们将使用浏览器的打印功能或固定页脚
-    footer.innerHTML = "提示：请在打印设置中勾选“页眉和页脚”以显示系统自动生成的页码。";
-    document.body.appendChild(footer);
 }
 
 renderProCopybook();

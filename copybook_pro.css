@@ -1,6 +1,5 @@
 :root {
     --grid-line-color: #bbbbbb;
-    --grid-line-light: #dddddd;
     --stroke-red: #ff0000;
     --char-black: #000000;
     --trace-gray: #d0d0d0;
@@ -15,9 +14,8 @@
 
 body {
     font-family: 'Noto Sans SC', sans-serif;
-    background: #e0e0e0;
+    background: #f4f4f4;
     padding-top: 60px;
-    counter-reset: page; /* 初始化页码计数器 */
 }
 
 /* 顶部操作栏 */
@@ -57,138 +55,103 @@ body {
     background: white;
     padding: 20mm 15mm;
     box-shadow: 0 0 15px rgba(0,0,0,0.2);
-    position: relative;
 }
 
 /* 课程标题 */
 .lesson-header {
     font-size: 20px;
     font-weight: bold;
-    margin: 30px 0 15px 0;
+    margin: 30px 0 10px 0;
     padding-bottom: 5px;
-    border-bottom: 2px solid #333;
+    border-bottom: 1.5px solid #333;
 }
 
-/* 字帖练习块 */
-.char-practice-block {
-    border: 1px solid #ccc;
+/* 单个字练习单元 (模仿 z2h) */
+.char-entry {
     margin-bottom: 20px;
-    padding: 12px;
     page-break-inside: avoid;
-    display: flex;
-    flex-direction: column;
 }
 
-/* 笔顺分解区域 */
-.stroke-order-steps {
+/* 笔顺区域：去掉边框，直接平铺 */
+.stroke-order-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
-    margin-bottom: 12px;
+    gap: 2px;
+    margin-bottom: 5px;
+    padding-left: 2px;
 }
 
 .step-box {
-    width: 32px;
-    height: 32px;
-    border: 0.5px solid #ddd;
+    width: 28px;
+    height: 28px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-/* 练习行容器：确保拼音和汉字绝对垂直对齐 */
-.practice-row {
-    display: flex;
-    width: 100%;
+/* 练习区域：拼音格 + 汉字格 统一在大边框内 */
+.practice-container {
+    border: 0.5px solid var(--grid-line-color);
+    display: inline-flex; /* 紧凑排列 */
 }
 
 .practice-column {
     display: flex;
     flex-direction: column;
     width: 14mm;
+    border-right: 0.5px solid var(--grid-line-color);
 }
 
-/* 拼音格：去掉左右竖线，形成贯穿横线 */
-.py-grid {
+.practice-column:last-child {
+    border-right: none;
+}
+
+/* 拼音格 */
+.py-box {
     height: 9mm;
-    border-top: 0.5px solid var(--grid-line-color);
     border-bottom: 0.5px solid var(--grid-line-color);
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 15px;
+    font-size: 14px;
     color: var(--pinyin-color);
 }
 
-/* 首尾格子补全边框 */
-.practice-column:first-child .py-grid { border-left: 0.5px solid var(--grid-line-color); }
-.practice-column:last-child .py-grid { border-right: 0.5px solid var(--grid-line-color); }
-
-/* 拼音内部虚线：使用更稳定的背景图实现 */
-.py-grid::after {
+/* 拼音格内部虚线 */
+.py-box::after {
     content: '';
     position: absolute;
-    top: 33.3%;
-    left: 0;
-    right: 0;
+    top: 33.3%; left: 0; right: 0;
     height: 33.3%;
     border-top: 0.5px dashed var(--grid-line-color);
     border-bottom: 0.5px dashed var(--grid-line-color);
-    pointer-events: none;
-    opacity: 0.8;
+    opacity: 0.6;
 }
 
-.py-grid.trace { color: var(--trace-gray); }
-.py-grid.empty { color: transparent; }
+.py-box.trace { color: var(--trace-gray); }
+.py-box.empty { color: transparent; }
 
-/* 汉字练习格 (米字格) */
-.tianzige {
+/* 汉字格 (米字格) */
+.ch-box {
     width: 14mm;
     height: 14mm;
-    border: 0.5px solid var(--grid-line-color);
-    margin-top: -0.5px;
-    margin-left: -0.5px;
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
     font-family: 'KaiTi', '楷体', serif;
-    font-size: 40px;
-    background: white;
-}
-
-/* 米字格内部辅助线：通过 SVG 确保打印清晰度 */
-.tianzige {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Cline x1='0' y1='50%25' x2='100%25' y2='50%25' stroke='%23bbb' stroke-width='0.5' stroke-dasharray='2,2'/%3E%3Cline x1='50%25' y1='0' x2='50%25' y2='100%25' stroke='%23bbb' stroke-width='0.5' stroke-dasharray='2,2'/%3E%3Cline x1='0' y1='0' x2='100%25' y2='100%25' stroke='%23bbb' stroke-width='0.5' stroke-dasharray='2,2'/%3E%3Cline x1='100%25' y1='0' x2='0' y2='100%25' stroke='%23bbb' stroke-width='0.5' stroke-dasharray='2,2'/%3E%3C/svg%3E");
+    font-size: 38px;
+    /* 使用高质量 SVG 解决亮暗不均 */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cline x1='0' y1='50' x2='100' y2='50' stroke='%23bbb' stroke-width='0.5' stroke-dasharray='3,3'/%3E%3Cline x1='50' y1='0' x2='50' y2='100' stroke='%23bbb' stroke-width='0.5' stroke-dasharray='3,3'/%3E%3Cline x1='0' y1='0' x2='100' y2='100' stroke='%23bbb' stroke-width='0.5' stroke-dasharray='3,3'/%3E%3Cline x1='100' y1='0' x2='0' y2='100' stroke='%23bbb' stroke-width='0.5' stroke-dasharray='3,3'/%3E%3C/svg%3E");
     background-size: 100% 100%;
 }
 
-.tianzige.trace span { color: var(--trace-gray); }
-.tianzige.empty span { visibility: hidden; }
+.ch-box.trace span { color: var(--trace-gray); }
+.ch-box.empty span { visibility: hidden; }
 
-/* 打印页码 */
 @media print {
     body { background: white; padding: 0; }
     .no-print { display: none; }
     #print-area { box-shadow: none; padding: 0; width: 100%; }
-    
-    /* 页码实现 */
-    .page-footer {
-        position: fixed;
-        bottom: 5mm;
-        left: 0;
-        right: 0;
-        text-align: center;
-        font-size: 12px;
-        color: #666;
-    }
-}
-
-/* 屏幕预览下的页码 */
-.page-footer {
-    text-align: center;
-    padding: 20px;
-    color: #888;
-    font-size: 14px;
 }
