@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二年级(下)生字小助手</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=ZCOOL+KuaiLe&display=swap"
+        rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Libraries (Offline) -->
+    <script src="libs/hanzi-writer.min.js"></script>
+    <script src="libs/pinyin-pro.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <h1>✏️ 二年级(下)生字小助手</h1>
+            <nav>
+                <button id="nav-learn" class="active">生字表</button>
+                <button id="nav-quiz">小测验</button>
+            </nav>
+        </header>
+
+        <main id="main-content">
+            <!-- Dynamic Content -->
+        </main>
+
+        <!-- Modal -->
+        <div id="char-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close-btn">&times;</span>
+                <div class="modal-body">
+                    <div id="character-display"></div> <!-- Hanzi Writer target -->
+                    <div class="info-panel">
+                        <h2 id="modal-char">字</h2>
+                        <p id="modal-pinyin">pīn yīn</p>
+                        <div class="controls">
+                            <button id="btn-animate" class="action-btn">🖌️ 笔顺</button>
+                            <button id="btn-audio" class="action-btn">🔊 读音</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logic -->
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

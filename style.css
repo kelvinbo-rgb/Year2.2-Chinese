@@ -1,0 +1,318 @@
+:root {
+    --primary: #FF6B6B;
+    --secondary: #4ECDC4;
+    --accent: #FFE66D;
+    --dark: #2C3E50;
+    --light: #F7F9FC;
+    --white: #FFFFFF;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --radius: 16px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+    background-color: #E0F7FA;
+    color: var(--dark);
+    min-height: 100vh;
+}
+
+header {
+    background: var(--white);
+    padding: 1rem 2rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+h1 {
+    font-family: 'ZCOOL KuaiLe', cursive;
+    color: var(--primary);
+    font-size: 1.8rem;
+}
+
+nav button {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-family: 'ZCOOL KuaiLe', cursive;
+    color: var(--dark);
+    border-radius: var(--radius);
+    transition: all 0.3s ease;
+}
+
+nav button.active {
+    background: var(--secondary);
+    color: var(--white);
+}
+
+main {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Lesson List */
+.lesson-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.lesson-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    border-left: 5px solid var(--secondary);
+}
+
+.lesson-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.lesson-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    color: var(--dark);
+}
+
+.preview-chars {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.char-chip {
+    background: var(--light);
+    padding: 0.2rem 0.6rem;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+/* Character Grid View (Inside a Lesson) */
+.back-btn {
+    margin-bottom: 1rem;
+    background: var(--dark);
+    color: var(--white);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'ZCOOL KuaiLe', cursive;
+}
+
+.char-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 1rem;
+}
+
+.char-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    aspect-ratio: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    font-family: 'KaiTi', '楷体', serif; /* Use a standard KaiTi font for characters */
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.2s;
+    color: var(--primary);
+}
+
+.char-card:hover {
+    transform: scale(1.1);
+    background: var(--accent);
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: 24px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+.close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #999;
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+#character-display {
+    width: 200px;
+    height: 200px;
+    border: 2px dashed #eee;
+    margin: 1rem 0;
+    background: #fff;
+}
+
+#modal-char {
+    display: none; /* Hidden because hanzi-writer shows it */
+}
+
+#modal-pinyin {
+    font-size: 2rem;
+    color: var(--dark);
+    font-family: 'Noto Sans SC', sans-serif;
+    margin-bottom: 1rem;
+}
+
+.controls {
+    display: flex;
+    gap: 1rem;
+}
+
+.action-btn {
+    padding: 0.8rem 1.5rem;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-family: 'ZCOOL KuaiLe', cursive;
+    transition: transform 0.2s;
+}
+
+#btn-animate {
+    background: var(--secondary);
+    color: var(--white);
+}
+
+#btn-audio {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.action-btn:active {
+    transform: scale(0.95);
+}
+
+/* Quiz Styles */
+.quiz-container {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: var(--radius);
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: var(--shadow);
+}
+
+.quiz-question {
+    font-size: 4rem;
+    color: var(--primary);
+    margin: 2rem 0;
+    font-family: 'KaiTi', serif;
+}
+
+.quiz-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.quiz-option {
+    padding: 1rem;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    font-size: 1.5rem;
+    background: var(--white);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.quiz-option:hover {
+    background: var(--light);
+    border-color: var(--secondary);
+}
+
+.quiz-option.correct {
+    background: #4ECDC4;
+    color: white;
+    border-color: #4ECDC4;
+}
+
+.quiz-option.wrong {
+    background: #FF6B6B;
+    color: white;
+    border-color: #FF6B6B;
+}
+
+#quiz-feedback {
+    margin-top: 1rem;
+    font-size: 1.2rem;
+    height: 1.5em;
+    font-weight: bold;
+}
+
+.btn-next {
+    margin-top: 2rem;
+    background: var(--dark);
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: none; /* Shown after answer */
+}
+
+@media (max-width: 600px) {
+    .char-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .quiz-options {
+        grid-template-columns: 1fr;
+    }
+}
