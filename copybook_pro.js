@@ -19,12 +19,12 @@ async function renderProCopybook() {
             masterBox.className = 'master-box';
             entry.appendChild(masterBox);
 
-            // 2. 笔顺分解行 (放入大盒子顶部)
+            // 2. 笔顺分解行
             const strokeRow = document.createElement('div');
             strokeRow.className = 'stroke-order-row';
             masterBox.appendChild(strokeRow);
 
-            // 3. 练习区域 (放入大盒子主体)
+            // 3. 练习区域
             const practiceContainer = document.createElement('div');
             practiceContainer.className = 'practice-container';
             masterBox.appendChild(practiceContainer);
@@ -49,6 +49,12 @@ async function renderProCopybook() {
                 practiceContainer.appendChild(column);
             }
             
+            // 4. 添加底部小标识 (替代页码)
+            const entryFooter = document.createElement('div');
+            entryFooter.className = 'entry-footer';
+            entryFooter.textContent = `二年级(下)同步字帖 · ${lesson.title} · ${char}`;
+            entry.appendChild(entryFooter);
+
             printArea.appendChild(entry);
 
             // 渲染笔顺
@@ -61,7 +67,7 @@ async function drawStrokes(char, target) {
     try {
         const data = await HanziWriter.loadCharacterData(char);
         const strokes = data.strokes;
-        const steps = Math.min(strokes.length, 24); // 增加上限以适配较多笔画
+        const steps = Math.min(strokes.length, 24);
 
         for (let i = 0; i < steps; i++) {
             const stepBox = document.createElement('div');

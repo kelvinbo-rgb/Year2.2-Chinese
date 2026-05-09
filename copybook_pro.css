@@ -18,6 +18,11 @@ body {
     padding-top: 60px;
 }
 
+/* 打印参数优化：隐藏浏览器默认边距内容 */
+@page {
+    margin: 10mm; /* 适当的物理边距 */
+}
+
 /* 顶部操作栏 */
 .actions {
     position: fixed;
@@ -53,7 +58,7 @@ body {
     width: 210mm;
     margin: 0 auto;
     background: white;
-    padding: 20mm 15mm;
+    padding: 10mm 15mm;
     box-shadow: 0 0 15px rgba(0,0,0,0.2);
 }
 
@@ -70,14 +75,16 @@ body {
 .char-entry {
     margin-bottom: 15px;
     page-break-inside: avoid;
+    position: relative;
 }
 
-/* 统一的大边框容器 (模仿 z2h) */
+/* 统一的大边框容器 */
 .master-box {
     border: 0.5px solid var(--grid-line-color);
     display: flex;
     flex-direction: column;
     width: 100%;
+    background: white;
 }
 
 /* 笔顺分解行 */
@@ -107,7 +114,7 @@ body {
 .practice-column {
     display: flex;
     flex-direction: column;
-    width: 14.07mm; /* 稍微调整以匹配 210mm 宽度扣除边距后的比例 */
+    width: 14.07mm;
     flex-grow: 1;
 }
 
@@ -131,7 +138,7 @@ body {
     height: 33.3%;
     border-top: 0.5px dashed var(--grid-line-color);
     border-bottom: 0.5px dashed var(--grid-line-color);
-    opacity: 0.5;
+    opacity: 0.4;
 }
 
 /* 汉字格 (田字格) */
@@ -144,6 +151,7 @@ body {
     font-family: 'KaiTi', '楷体', serif;
     font-size: 38px;
     border-right: 0.5px solid var(--grid-line-color);
+    /* 十字虚线田字格 */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cline x1='0' y1='50' x2='100' y2='50' stroke='%23bbb' stroke-width='0.5' stroke-dasharray='4,4'/%3E%3Cline x1='50' y1='0' x2='50' y2='100' stroke='%23bbb' stroke-width='0.5' stroke-dasharray='4,4'/%3E%3C/svg%3E");
     background-size: 100% 100%;
 }
@@ -154,6 +162,14 @@ body {
 
 .ch-box.trace span { color: var(--trace-gray); }
 .ch-box.empty span { visibility: hidden; }
+
+/* 单元底部标识 (替代页码) */
+.entry-footer {
+    text-align: right;
+    font-size: 9px;
+    color: #bbb;
+    margin-top: 2px;
+}
 
 @media print {
     body { background: white; padding: 0; }
