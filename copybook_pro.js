@@ -2,14 +2,6 @@ const lessonData = window.lessonData;
 const printArea = document.getElementById('print-area');
 
 async function renderProCopybook() {
-    // 创建全局页脚
-    if (!document.getElementById('global-print-footer')) {
-        const footer = document.createElement('div');
-        footer.id = 'global-print-footer';
-        footer.textContent = '二年级(下)同步字帖 · 生字练习助手';
-        document.body.appendChild(footer);
-    }
-
     for (const lesson of lessonData) {
         // 1. 课程标题
         const header = document.createElement('h2');
