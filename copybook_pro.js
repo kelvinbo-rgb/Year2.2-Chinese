@@ -2,6 +2,14 @@ const lessonData = window.lessonData;
 const printArea = document.getElementById('print-area');
 
 async function renderProCopybook() {
+    // 创建全局页脚
+    if (!document.getElementById('global-print-footer')) {
+        const footer = document.createElement('div');
+        footer.id = 'global-print-footer';
+        footer.textContent = '二年级(下)同步字帖 · 生字练习助手';
+        document.body.appendChild(footer);
+    }
+
     for (const lesson of lessonData) {
         // 1. 课程标题
         const header = document.createElement('h2');
@@ -14,17 +22,14 @@ async function renderProCopybook() {
             const entry = document.createElement('div');
             entry.className = 'char-entry';
 
-            // 创建大盒子
             const masterBox = document.createElement('div');
             masterBox.className = 'master-box';
             entry.appendChild(masterBox);
 
-            // 2. 笔顺分解行
             const strokeRow = document.createElement('div');
             strokeRow.className = 'stroke-order-row';
             masterBox.appendChild(strokeRow);
 
-            // 3. 练习区域
             const practiceContainer = document.createElement('div');
             practiceContainer.className = 'practice-container';
             masterBox.appendChild(practiceContainer);
@@ -49,12 +54,6 @@ async function renderProCopybook() {
                 practiceContainer.appendChild(column);
             }
             
-            // 4. 添加底部小标识 (替代页码)
-            const entryFooter = document.createElement('div');
-            entryFooter.className = 'entry-footer';
-            entryFooter.textContent = `二年级(下)同步字帖 · ${lesson.title} · ${char}`;
-            entry.appendChild(entryFooter);
-
             printArea.appendChild(entry);
 
             // 渲染笔顺
