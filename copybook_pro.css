@@ -68,8 +68,16 @@ body {
 
 /* 单个字练习单元 */
 .char-entry {
-    margin-bottom: 18px;
+    margin-bottom: 15px;
     page-break-inside: avoid;
+}
+
+/* 统一的大边框容器 (模仿 z2h) */
+.master-box {
+    border: 0.5px solid var(--grid-line-color);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
 }
 
 /* 笔顺分解行 */
@@ -77,8 +85,9 @@ body {
     display: flex;
     flex-wrap: wrap;
     gap: 2px;
-    margin-bottom: 5px;
-    padding-left: 2px;
+    padding: 4px;
+    border-bottom: 0.5px solid var(--grid-line-color);
+    min-height: 32px;
 }
 
 .step-box {
@@ -89,22 +98,20 @@ body {
     align-items: center;
 }
 
-/* 练习区域：核心结构优化 */
+/* 练习区域容器 */
 .practice-container {
-    border-top: 0.5px solid var(--grid-line-color);
-    border-bottom: 0.5px solid var(--grid-line-color);
-    border-left: 0.5px solid var(--grid-line-color);
-    border-right: 0.5px solid var(--grid-line-color);
-    display: inline-flex;
+    display: flex;
+    width: 100%;
 }
 
 .practice-column {
     display: flex;
     flex-direction: column;
-    width: 14mm;
+    width: 14.07mm; /* 稍微调整以匹配 210mm 宽度扣除边距后的比例 */
+    flex-grow: 1;
 }
 
-/* 拼音格：彻底去掉侧边竖线 */
+/* 拼音格 */
 .py-box {
     height: 9mm;
     border-bottom: 0.5px solid var(--grid-line-color);
@@ -114,8 +121,6 @@ body {
     align-items: center;
     font-size: 14px;
     color: var(--pinyin-color);
-    border-left: none;
-    border-right: none;
 }
 
 /* 拼音格内部虚线 */
@@ -129,9 +134,8 @@ body {
     opacity: 0.5;
 }
 
-/* 汉字格 (田字格版) */
+/* 汉字格 (田字格) */
 .ch-box {
-    width: 14mm;
     height: 14mm;
     position: relative;
     display: flex;
@@ -139,9 +143,7 @@ body {
     align-items: center;
     font-family: 'KaiTi', '楷体', serif;
     font-size: 38px;
-    /* 汉字格之间保留竖线 */
     border-right: 0.5px solid var(--grid-line-color);
-    /* 田字格 SVG：仅保留十字虚线 */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cline x1='0' y1='50' x2='100' y2='50' stroke='%23bbb' stroke-width='0.5' stroke-dasharray='4,4'/%3E%3Cline x1='50' y1='0' x2='50' y2='100' stroke='%23bbb' stroke-width='0.5' stroke-dasharray='4,4'/%3E%3C/svg%3E");
     background-size: 100% 100%;
 }

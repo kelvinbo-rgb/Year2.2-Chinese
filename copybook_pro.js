@@ -14,14 +14,20 @@ async function renderProCopybook() {
             const entry = document.createElement('div');
             entry.className = 'char-entry';
 
-            // 2. 笔顺分解行
+            // 创建大盒子
+            const masterBox = document.createElement('div');
+            masterBox.className = 'master-box';
+            entry.appendChild(masterBox);
+
+            // 2. 笔顺分解行 (放入大盒子顶部)
             const strokeRow = document.createElement('div');
             strokeRow.className = 'stroke-order-row';
-            entry.appendChild(strokeRow);
+            masterBox.appendChild(strokeRow);
 
-            // 3. 练习容器 (拼音+汉字)
+            // 3. 练习区域 (放入大盒子主体)
             const practiceContainer = document.createElement('div');
             practiceContainer.className = 'practice-container';
+            masterBox.appendChild(practiceContainer);
             
             const py = pinyinPro.pinyin(char);
             for (let i = 0; i < 13; i++) {
@@ -42,7 +48,7 @@ async function renderProCopybook() {
 
                 practiceContainer.appendChild(column);
             }
-            entry.appendChild(practiceContainer);
+            
             printArea.appendChild(entry);
 
             // 渲染笔顺
@@ -55,7 +61,7 @@ async function drawStrokes(char, target) {
     try {
         const data = await HanziWriter.loadCharacterData(char);
         const strokes = data.strokes;
-        const steps = Math.min(strokes.length, 20); // 增加上限
+        const steps = Math.min(strokes.length, 24); // 增加上限以适配较多笔画
 
         for (let i = 0; i < steps; i++) {
             const stepBox = document.createElement('div');
@@ -64,8 +70,8 @@ async function drawStrokes(char, target) {
 
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.setAttribute('viewBox', '0 0 1024 1024');
-            svg.setAttribute('width', '28');
-            svg.setAttribute('height', '28');
+            svg.setAttribute('width', '24');
+            svg.setAttribute('height', '24');
             
             const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             g.setAttribute('transform', 'scale(1, -1) translate(0, -900)');
