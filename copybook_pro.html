@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二年级(下)专业字帖生成器</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="copybook_pro.css">
+</head>
+<body>
+    <div class="no-print actions">
+        <button onclick="window.print()">🖨️ 打印当前字帖</button>
+        <button onclick="window.location.href='index.html'">⬅ 返回首页</button>
+        <span class="hint">打印建议：开启“背景图形”，缩放设为 100%，纸张 A4。</span>
+    </div>
+
+    <div id="print-area">
+        <!-- 课程和字帖内容将在这里生成 -->
+    </div>
+
+    <script src="libs/hanzi-writer.min.js"></script>
+    <script src="libs/pinyin-pro.js"></script>
+    <script src="data.js"></script>
+    <script src="copybook_pro.js"></script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+:root {
+    --grid-line-color: #bbbbbb;
+    --stroke-red: #ff0000;
+    --char-black: #000000;
+    --trace-gray: #d0d0d0;
+    --pinyin-color: #333333;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: #e0e0e0;
+    padding-top: 60px;
+}
+
+/* 顶部操作栏 */
+.actions {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    padding: 10px 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.actions button {
+    padding: 8px 16px;
+    background: #4ECDC4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.hint {
+    font-size: 13px;
+    color: #888;
+}
+
+/* 打印区域 */
+#print-area {
+    width: 210mm;
+    min-height: 297mm;
+    background: white;
+    margin: 0 auto;
+    padding: 20mm 15mm;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+}
+
+/* 课程标题 */
+.lesson-header {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 30px 0 15px 0;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #333;
+    page-break-after: avoid;
+}
+
+/* 字帖练习块 */
+.char-practice-block {
+    border: 1px solid #ccc;
+    margin-bottom: 15px;
+    padding: 10px;
+    page-break-inside: avoid;
+}
+
+/* 笔顺分解区域 */
+.stroke-order-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.step-box {
+    width: 32px;
+    height: 32px;
+    border: 0.5px solid #ddd;
+    background: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 拼音行 (四线三格) */
+.py-row {
+    display: flex;
+    margin-bottom: -0.5px;
+}
+
+.py-grid {
+    width: 14.5mm;
+    height: 10mm;
+    border: 0.5px solid var(--grid-line-color);
+    margin-right: -0.5px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    color: var(--pinyin-color);
+    background: white;
+}
+
+/* 拼音内部虚线 */
+.py-grid::before {
+    content: '';
+    position: absolute;
+    top: 33.3%;
+    left: 0;
+    right: 0;
+    height: 33.3%;
+    border-top: 0.5px dashed var(--grid-line-color);
+    border-bottom: 0.5px dashed var(--grid-line-color);
+    pointer-events: none;
+}
+
+.py-grid.trace { color: var(--trace-gray); }
+.py-grid.empty { color: transparent; }
+
+/* 汉字练习行 (米字格) */
+.ch-row {
+    display: flex;
+}
+
+.tianzige {
+    width: 14.5mm;
+    height: 14.5mm;
+    border: 0.5px solid var(--grid-line-color);
+    margin-right: -0.5px;
+    margin-top: -0.5px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'KaiTi', '楷体', serif;
+    font-size: 42px;
+    background: white;
+}
+
+/* 米字格内部辅助线 */
+.tianzige::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: 
+        linear-gradient(var(--grid-line-color) 0.5px, transparent 0.5px),
+        linear-gradient(to right, var(--grid-line-color) 0.5px, transparent 0.5px),
+        linear-gradient(45deg, transparent 49.5%, var(--grid-line-color) 49.5%, var(--grid-line-color) 50.5%, transparent 50.5%),
+        linear-gradient(-45deg, transparent 49.5%, var(--grid-line-color) 49.5%, var(--grid-line-color) 50.5%, transparent 50.5%);
+    background-position: center;
+    background-size: 100% 50%, 50% 100%, 100% 100%, 100% 100%;
+    background-repeat: no-repeat;
+    opacity: 0.3;
+    z-index: 0;
+}
+
+.tianzige span {
+    position: relative;
+    z-index: 10;
+}
+
+.tianzige.trace span { color: var(--trace-gray); }
+.tianzige.empty span { visibility: hidden; }
+
+@media print {
+    body { background: white; padding: 0; }
+    .no-print { display: none; }
+    #print-area { box-shadow: none; padding: 10mm; width: 100%; }
+    .char-practice-block { border-color: #eee; }
+}
