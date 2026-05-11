@@ -115,7 +115,7 @@ body {
     flex-grow: 1;
 }
 
-/* 拼音格优化：精准微调位置 */
+/* 拼音格优化：微调字号至 22px，追求极致精致感 */
 .py-box {
     height: 9mm;
     border-bottom: 0.5px solid var(--grid-line-color);
@@ -124,14 +124,13 @@ body {
     justify-content: center;
     align-items: flex-start;
     font-family: 'LXGW WenKai Screen', sans-serif;
-    font-size: 24px;
+    font-size: 22px; /* 稍微缩小一点点，增加呼吸感 */
     color: var(--pinyin-color);
     overflow: hidden;
 }
 
 .py-box span {
     display: inline-block;
-    /* 最终微调：-0.5mm 上移量，配合 1.15倍纵向拉伸 */
     transform: translateY(-0.5mm) scaleY(1.15);
     line-height: 9mm;
     white-space: nowrap;
@@ -140,10 +139,9 @@ body {
 
 /* 针对长拼音进行压缩处理 */
 .py-box.long-pinyin {
-    font-size: 16px; 
+    font-size: 15px; 
 }
 .py-box.long-pinyin span {
-    /* 长拼音的上移量也同步微调 */
     transform: translateY(-0.7mm) scaleY(1.15);
 }
 
