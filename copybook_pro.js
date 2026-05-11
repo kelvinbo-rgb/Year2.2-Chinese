@@ -18,10 +18,12 @@ async function renderProCopybook() {
             masterBox.className = 'master-box';
             entry.appendChild(masterBox);
 
+            // 2. 笔顺分解行
             const strokeRow = document.createElement('div');
             strokeRow.className = 'stroke-order-row';
             masterBox.appendChild(strokeRow);
 
+            // 3. 练习区域
             const practiceContainer = document.createElement('div');
             practiceContainer.className = 'practice-container';
             masterBox.appendChild(practiceContainer);
@@ -32,14 +34,31 @@ async function renderProCopybook() {
                 column.className = 'practice-column';
 
                 const pyBox = document.createElement('div');
-                pyBox.className = 'py-box' + (i === 0 ? '' : (i < 6 ? ' trace' : ' empty'));
-                pyBox.textContent = py;
+                // 拼音逻辑：1个黑，5个灰(trace)，其余空白(empty)
+                if (i === 0) {
+                    pyBox.className = 'py-box';
+                    pyBox.textContent = py;
+                } else if (i < 6) {
+                    pyBox.className = 'py-box trace';
+                    pyBox.textContent = py;
+                } else {
+                    pyBox.className = 'py-box empty';
+                    pyBox.textContent = ''; // 空白格不填充文字
+                }
                 column.appendChild(pyBox);
 
                 const chBox = document.createElement('div');
-                chBox.className = 'ch-box' + (i === 0 ? '' : (i < 6 ? ' trace' : ' empty'));
+                // 汉字逻辑：1个黑，5个灰(trace)，其余空白(empty)
                 const span = document.createElement('span');
                 span.textContent = char;
+                if (i === 0) {
+                    chBox.className = 'ch-box';
+                } else if (i < 6) {
+                    chBox.className = 'ch-box trace';
+                } else {
+                    chBox.className = 'ch-box empty';
+                    span.style.visibility = 'hidden'; // 空白格隐藏汉字
+                }
                 chBox.appendChild(span);
                 column.appendChild(chBox);
 
