@@ -13,7 +13,7 @@
 }
 
 body {
-    font-family: 'Noto Sans SC', sans-serif;
+    font-family: 'LXGW WenKai Screen', 'Noto Sans SC', sans-serif;
     background: #f4f4f4;
     padding-top: 60px;
 }
@@ -115,7 +115,7 @@ body {
     flex-grow: 1;
 }
 
-/* 拼音格优化：Georgia 字体配合纵向拉伸解决“短腿”问题 */
+/* 拼音格终极优化：使用教育类字体解决“断开”与“占格”问题 */
 .py-box {
     height: 9mm;
     border-bottom: 0.5px solid var(--grid-line-color);
@@ -123,29 +123,28 @@ body {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    /* Georgia 比 Times New Roman 的下沉部更深，字形更饱满 */
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 22px;
+    /* 核心修改：使用 LXGW WenKai，其拼音字符宽度一致且基准线稳定 */
+    font-family: 'LXGW WenKai Screen', sans-serif;
+    font-size: 20px; /* 优质字体不需要过大字号即可看清 */
     color: var(--pinyin-color);
     overflow: hidden;
 }
 
 .py-box span {
     display: inline-block;
-    /* 核心策略：微调位移 + 1.15倍纵向拉伸，让字母的“脚”更长 */
-    transform: translateY(-0.6mm) scaleY(1.15);
+    /* 针对 LXGW WenKai 调优的位移：-1.2mm 可确保声调在顶格 */
+    transform: translateY(-1.2mm);
     line-height: 9mm;
     white-space: nowrap;
-    letter-spacing: -0.2px;
+    letter-spacing: 0.5px; /* 解决 jiǎ n 这种断开问题 */
 }
 
-/* 对于长拼音进行压缩处理 */
+/* 针对长拼音进行压缩处理 */
 .py-box.long-pinyin {
-    font-size: 16px; 
+    font-size: 14px; 
 }
-
 .py-box.long-pinyin span {
-    transform: translateY(-0.8mm) scaleY(1.15); /* 长拼音位移微调 */
+    transform: translateY(-1.5mm);
 }
 
 /* 拼音格内部虚线 */
@@ -169,7 +168,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-family: 'KaiTi', '楷体', serif;
+    font-family: 'LXGW WenKai Screen', 'KaiTi', '楷体', serif;
     font-size: 38px;
     border-right: 0.5px solid var(--grid-line-color);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cline x1='0' y1='50' x2='100' y2='50' stroke='%23777' stroke-width='0.5' stroke-dasharray='4,4'/%3E%3Cline x1='50' y1='0' x2='50' y2='100' stroke='%23777' stroke-width='0.5' stroke-dasharray='4,4'/%3E%3C/svg%3E");
