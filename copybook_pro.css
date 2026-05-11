@@ -115,18 +115,28 @@ body {
     flex-grow: 1;
 }
 
-/* 拼音格优化：解决字母跨格与对齐问题 */
+/* 拼音格终极优化：模拟标准练习册比例 */
 .py-box {
     height: 9mm;
     border-bottom: 0.5px solid var(--grid-line-color);
     position: relative;
-    text-align: center;
-    /* 核心修改：使用 Times New Roman 配合特定的行高来锁定基准线 */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* 从顶部对齐，方便精准位移 */
     font-family: "Times New Roman", Georgia, serif;
-    font-size: 20px;
-    line-height: 10.5mm; /* 调整此值可上下移动所有字母，确保其踩在第三条线上 */
+    font-size: 24px; /* 增大字号，让字母更饱满 */
     color: var(--pinyin-color);
-    overflow: hidden;
+    overflow: visible; /* 允许声调或降部微溢出以保证观感 */
+}
+
+/* 通过伪元素或内部 span 进行垂直偏移修正 */
+.py-box span {
+    display: inline-block;
+    transform: translateY(-0.8mm); /* 向上提，确保声调在第一格，主体在第二格 */
+    line-height: 9mm;
+    white-space: nowrap;
+    /* 如果拼音太长，适当缩小字号 */
+    max-width: 100%;
 }
 
 /* 拼音格内部虚线 */
