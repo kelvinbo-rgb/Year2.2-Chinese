@@ -122,21 +122,25 @@ body {
     position: relative;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* 从顶部对齐，方便精准位移 */
+    align-items: flex-start;
     font-family: "Times New Roman", Georgia, serif;
-    font-size: 24px; /* 增大字号，让字母更饱满 */
+    font-size: 24px;
     color: var(--pinyin-color);
-    overflow: visible; /* 允许声调或降部微溢出以保证观感 */
+    overflow: hidden;
 }
 
-/* 通过伪元素或内部 span 进行垂直偏移修正 */
+/* 关键修正：加大 translateY 位移量 */
 .py-box span {
     display: inline-block;
-    transform: translateY(-0.8mm); /* 向上提，确保声调在第一格，主体在第二格 */
+    transform: translateY(-1.5mm); /* 提升位移，确保声调进入第一格 */
     line-height: 9mm;
     white-space: nowrap;
-    /* 如果拼音太长，适当缩小字号 */
-    max-width: 100%;
+    letter-spacing: -0.2px;
+}
+
+/* 对于长拼音进行压缩处理 */
+.py-box.long-pinyin {
+    font-size: 18px; /* 针对长拼音减小字号，防止重叠 */
 }
 
 /* 拼音格内部虚线 */

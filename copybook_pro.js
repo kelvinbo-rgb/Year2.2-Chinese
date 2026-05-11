@@ -32,16 +32,21 @@ async function renderProCopybook() {
                 column.className = 'practice-column';
 
                 const pyBox = document.createElement('div');
+                // 检测长拼音
+                if (py.length > 4) {
+                    pyBox.classList.add('long-pinyin');
+                }
+
                 const pySpan = document.createElement('span');
                 pySpan.textContent = py;
                 pyBox.appendChild(pySpan);
 
                 if (i === 0) {
-                    pyBox.className = 'py-box';
+                    pyBox.classList.add('py-box');
                 } else if (i < 6) {
-                    pyBox.className = 'py-box trace';
+                    pyBox.classList.add('py-box', 'trace');
                 } else {
-                    pyBox.className = 'py-box empty';
+                    pyBox.classList.add('py-box', 'empty');
                     pySpan.style.visibility = 'hidden';
                 }
                 column.appendChild(pyBox);
