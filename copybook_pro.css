@@ -1,5 +1,7 @@
 :root {
-    --grid-line-color: #888888;
+    --grid-line-color: #888888; /* 外框实线颜色 */
+    --dash-line-pinyin: #bbbbbb; /* 拼音虚线调浅，补偿 CSS 渲染密度 */
+    --dash-line-hanzi: #999999;  /* 汉字虚线调深，向中间靠拢 */
     --stroke-red: #ff0000;
     --char-black: #000000;
     --trace-gray: #d0d0d0;
@@ -115,7 +117,7 @@ body {
     flex-grow: 1;
 }
 
-/* 拼音格优化：微调字号至 22px，追求极致精致感 */
+/* 拼音格优化 */
 .py-box {
     height: 9mm;
     border-bottom: 0.5px solid var(--grid-line-color);
@@ -124,7 +126,7 @@ body {
     justify-content: center;
     align-items: flex-start;
     font-family: 'LXGW WenKai Screen', sans-serif;
-    font-size: 22px; /* 稍微缩小一点点，增加呼吸感 */
+    font-size: 22px;
     color: var(--pinyin-color);
     overflow: hidden;
 }
@@ -145,21 +147,21 @@ body {
     transform: translateY(-0.7mm) scaleY(1.15);
 }
 
-/* 拼音格内部虚线 */
+/* 拼音格内部虚线：颜色调浅 */
 .py-box::after {
     content: '';
     position: absolute;
     top: 33.3%; left: 0; right: 0;
     height: 33.3%;
-    border-top: 0.5px dashed var(--grid-line-color);
-    border-bottom: 0.5px dashed var(--grid-line-color);
+    border-top: 0.5px dashed var(--dash-line-pinyin);
+    border-bottom: 0.5px dashed var(--dash-line-pinyin);
     pointer-events: none;
 }
 
 .py-box.trace { color: var(--trace-gray); }
 .py-box.empty { color: transparent; }
 
-/* 汉字格 (田字格版) */
+/* 汉字格：内部虚线颜色加深 (%23999999 即 #999999) */
 .ch-box {
     height: 14mm;
     position: relative;
@@ -169,7 +171,7 @@ body {
     font-family: 'LXGW WenKai Screen', 'KaiTi', '楷体', serif;
     font-size: 38px;
     border-right: 0.5px solid var(--grid-line-color);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cline x1='0' y1='50' x2='100' y2='50' stroke='%23777' stroke-width='0.5' stroke-dasharray='4,4'/%3E%3Cline x1='50' y1='0' x2='50' y2='100' stroke='%23777' stroke-width='0.5' stroke-dasharray='4,4'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cline x1='0' y1='50' x2='100' y2='50' stroke='%23999999' stroke-width='0.5' stroke-dasharray='4,4'/%3E%3Cline x1='50' y1='0' x2='50' y2='100' stroke='%23999999' stroke-width='0.5' stroke-dasharray='4,4'/%3E%3C/svg%3E");
     background-size: 100% 100%;
 }
 
