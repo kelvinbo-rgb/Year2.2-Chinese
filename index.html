@@ -33,33 +33,36 @@
             <!-- Dynamic Content rendered by app.js -->
         </main>
 
-        <!-- Upgraded Character & Phonics & Stroke Order Modal -->
+        <!-- Upgraded Character & Phonics & Stroke Order Modal (Compact, No Scrollbar) -->
         <div id="char-modal" class="modal hidden">
-            <div class="modal-content">
-                <span class="close-btn">&times;</span>
-                <div class="modal-body">
-                    <!-- Top: Character & Pinyin & Phonics -->
-                    <div class="char-header-section">
-                        <div class="pinyin-display-box">
-                            <span id="modal-pinyin" class="large-pinyin">chūn</span>
-                            <span id="modal-tone-badge" class="tone-badge">第1声 (阴平)</span>
+            <div class="modal-content modal-content-compact">
+                <span class="close-btn" id="close-char-modal">&times;</span>
+                <div class="modal-compact-layout">
+                    <!-- Top Row: Left Tianzige + Right Phonics & Audio -->
+                    <div class="modal-top-row">
+                        <!-- Left: HanziWriter Tianzige -->
+                        <div class="modal-writer-col">
+                            <div id="character-display"></div>
+                            <div class="writer-controls">
+                                <button id="btn-animate" class="action-btn-small" title="播放笔顺动画">▶️ 播放</button>
+                                <button id="btn-quiz" class="action-btn-small" title="在屏幕上描红练写">✏️ 描红</button>
+                                <button id="btn-restart" class="action-btn-small" title="重播">🔄 重来</button>
+                            </div>
                         </div>
-                        <div id="modal-phonics-box" class="phonics-box">
-                            <!-- Injected: 声母、韵母、拼读公式 -->
-                        </div>
-                        <div class="audio-controls">
-                            <button id="btn-audio" class="action-btn audio-btn-primary">🔊 听字音 (慢速)</button>
-                            <button id="btn-spell" class="action-btn audio-btn-spell">🗣️ 示范拼读</button>
-                        </div>
-                    </div>
 
-                    <!-- Middle: HanziWriter Tianzige -->
-                    <div class="char-writer-section">
-                        <div id="character-display"></div>
-                        <div class="writer-controls">
-                            <button id="btn-animate" class="action-btn-small">▶️ 播放笔顺</button>
-                            <button id="btn-quiz" class="action-btn-small">✏️ 描红练写</button>
-                            <button id="btn-restart" class="action-btn-small">🔄 重新演示</button>
+                        <!-- Right: Phonics & Tone & Audio -->
+                        <div class="modal-phonics-col">
+                            <div class="pinyin-display-box">
+                                <span id="modal-pinyin" class="large-pinyin">chūn</span>
+                                <span id="modal-tone-badge" class="tone-badge">第1声 (阴平)</span>
+                            </div>
+                            <div id="modal-phonics-box" class="phonics-box">
+                                <!-- Injected: 声母、韵母、拼读公式 -->
+                            </div>
+                            <div class="audio-controls">
+                                <button id="btn-audio" class="action-btn audio-btn-primary">🔊 听字音 (慢速)</button>
+                                <button id="btn-spell" class="action-btn audio-btn-spell">🗣️ 示范拼读</button>
+                            </div>
                         </div>
                     </div>
 
@@ -72,6 +75,25 @@
                         <div id="stroke-steps-container" class="stroke-steps-container">
                             <!-- SVGs of step 1, 2, 3... generated dynamically -->
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Lesson Text Modal (For校准2024新版教材) -->
+        <div id="edit-text-modal" class="modal hidden">
+            <div class="modal-content" style="max-width: 600px; padding: 1.5rem;">
+                <span class="close-btn" id="close-edit-modal">&times;</span>
+                <h3 style="font-family:'ZCOOL KuaiLe'; color:var(--primary); margin-bottom:0.6rem; font-size:1.4rem;">✏️ 校对/修改本课课文</h3>
+                <p style="font-size:0.9rem; color:var(--gray); margin-bottom:0.8rem;">
+                    如果您的教材（2024统编新版）字句有差异，可直接在下方修改为书本原文。保存后将自动适配拼音和领读。
+                </p>
+                <textarea id="edit-text-input" style="width:100%; min-height:220px; padding:0.8rem; border-radius:10px; border:2px solid #CFD8DC; font-size:1.05rem; line-height:1.6; outline:none; font-family:inherit;"></textarea>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1rem; flex-wrap:wrap; gap:0.6rem;">
+                    <button id="btn-reset-text" style="background:#ECEFF1; color:#546E7A; border:none; padding:0.5rem 1rem; border-radius:30px; cursor:pointer;">🔄 恢复默认文本</button>
+                    <div style="display:flex; gap:0.6rem;">
+                        <button id="btn-cancel-edit" style="background:#FFF; border:1px solid #CFD8DC; padding:0.5rem 1.2rem; border-radius:30px; cursor:pointer;">取消</button>
+                        <button id="btn-save-text" style="background:var(--secondary); color:#FFF; border:none; padding:0.5rem 1.5rem; border-radius:30px; font-weight:700; cursor:pointer;">💾 保存并应用</button>
                     </div>
                 </div>
             </div>

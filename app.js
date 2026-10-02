@@ -2,7 +2,7 @@ const lessonData = window.lessonData;
 
 const mainContent = document.getElementById('main-content');
 const modal = document.getElementById('char-modal');
-const closeBtn = document.querySelector('.close-btn');
+const closeCharModalBtn = document.getElementById('close-char-modal');
 const btnAnimate = document.getElementById('btn-animate');
 const btnQuiz = document.getElementById('btn-quiz');
 const btnRestart = document.getElementById('btn-restart');
@@ -15,6 +15,15 @@ const modalPhonicsBox = document.getElementById('modal-phonics-box');
 const strokeCountBadge = document.getElementById('stroke-count-badge');
 const strokeStepsContainer = document.getElementById('stroke-steps-container');
 
+// Edit Text Modal elements
+const editTextModal = document.getElementById('edit-text-modal');
+const closeEditModalBtn = document.getElementById('close-edit-modal');
+const btnCancelEdit = document.getElementById('btn-cancel-edit');
+const btnSaveText = document.getElementById('btn-save-text');
+const btnResetText = document.getElementById('btn-reset-text');
+const editTextInput = document.getElementById('edit-text-input');
+let currentEditingLessonIndex = -1;
+
 const navLearn = document.getElementById('nav-learn');
 const navCustom = document.getElementById('nav-custom');
 const navQuiz = document.getElementById('nav-quiz');
@@ -24,7 +33,7 @@ let currentCharacter = '';
 let currentUtterance = null;
 let voicesList = [];
 
-// Load voices cleanly
+// Clean voice loader
 function updateVoices() {
     if ('speechSynthesis' in window) {
         voicesList = window.speechSynthesis.getVoices();
@@ -59,6 +68,23 @@ function setActiveNav(tab) {
     if (tab === 'learn') navLearn.classList.add('active');
     else if (tab === 'custom') navCustom.classList.add('active');
     else if (tab === 'quiz') navQuiz.classList.add('active');
+}
+
+// ================= Lesson Text Helper (Supports 2024 New Edition Calibration) =================
+function getLessonText(lessonIndex) {
+    const custom = localStorage.getItem('custom_lesson_text_' + lessonIndex);
+    if (custom !== null && custom.trim().length > 0) {
+        return custom;
+    }
+    return lessonData[lessonIndex].text || '';
+}
+
+function saveCustomLessonText(lessonIndex, text) {
+    localStorage.setItem('custom_lesson_text_' + lessonIndex, text.trim());
+}
+
+function resetCustomLessonText(lessonIndex) {
+    localStorage.removeItem('custom_lesson_text_' + lessonIndex);
 }
 
 // ================= Speech Engine (Zero API / Free) =================
@@ -159,6 +185,51 @@ const TONE_NAMES = [
     '第四声 (去声 ˋ)'
 ];
 
+// Normalize accented pinyin vowels to base latin letters
+function removeTone(str) {
+    if (!str) return '';
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ü/g, 'v');
+}
+
+// Standard Chinese characters used as guides for finals with tones
+// This ensures TTS reads genuine Chinese characters (e.g. '坡——昂——旁'), avoiding Latin 'ang' being mispronounced as 'an'!
+const FINAL_GUIDE_CHARS = {
+    'a':   { 1: '啊', 2: '啊', 3: '啊', 4: '啊', 0: '啊' },
+    'o':   { 1: '喔', 2: '喔', 3: '喔', 4: '喔', 0: '喔' },
+    'e':   { 1: '鹅', 2: '鹅', 3: '鹅', 4: '饿', 0: '鹅' },
+    'i':   { 1: '衣', 2: '移', 3: '椅', 4: '意', 0: '衣' },
+    'u':   { 1: '乌', 2: '无', 3: '五', 4: '物', 0: '乌' },
+    'v':   { 1: '迂', 2: '鱼', 3: '雨', 4: '玉', 0: '迂' },
+    'ai':  { 1: '哀', 2: '癌', 3: '矮', 4: '爱', 0: '哀' },
+    'ei':  { 1: '诶', 2: '诶', 3: '诶', 4: '诶', 0: '诶' },
+    'ui':  { 1: '微', 2: '围', 3: '伟', 4: '卫', 0: '微' },
+    'ao':  { 1: '熬', 2: '熬', 3: '袄', 4: '傲', 0: '熬' },
+    'ou':  { 1: '欧', 2: '欧', 3: '偶', 4: '藕', 0: '欧' },
+    'iu':  { 1: '优', 2: '由', 3: '有', 4: '又', 0: '优' },
+    'ie':  { 1: '椰', 2: '爷', 3: '也', 4: '页', 0: '椰' },
+    've':  { 1: '约', 2: '约', 3: '约', 4: '月', 0: '约' },
+    'er':  { 1: '儿', 2: '儿', 3: '耳', 4: '二', 0: '儿' },
+    'an':  { 1: '安', 2: '安', 3: '按', 4: '暗', 0: '安' },
+    'en':  { 1: '恩', 2: '恩', 3: '恩', 4: '摁', 0: '恩' },
+    'in':  { 1: '因', 2: '银', 3: '引', 4: '印', 0: '因' },
+    'un':  { 1: '温', 2: '文', 3: '稳', 4: '问', 0: '温' },
+    'vn':  { 1: '晕', 2: '云', 3: '允', 4: '运', 0: '晕' },
+    'ang': { 1: '肮', 2: '昂', 3: '昂', 4: '盎', 0: '昂' },
+    'eng': { 1: '亨', 2: '恒', 3: '恒', 4: '亨', 0: '亨' },
+    'ing': { 1: '英', 2: '迎', 3: '影', 4: '硬', 0: '英' },
+    'ong': { 1: '轰', 2: '红', 3: '哄', 4: '瓮', 0: '轰' },
+    'ia':  { 1: '鸭', 2: '牙', 3: '雅', 4: '亚', 0: '鸭' },
+    'ian': { 1: '烟', 2: '言', 3: '眼', 4: '燕', 0: '烟' },
+    'iang':{ 1: '央', 2: '羊', 3: '养', 4: '样', 0: '央' },
+    'iao': { 1: '腰', 2: '摇', 3: '咬', 4: '要', 0: '腰' },
+    'iong':{ 1: '庸', 2: '庸', 3: '勇', 4: '用', 0: '庸' },
+    'ua':  { 1: '蛙', 2: '娃', 3: '瓦', 4: '袜', 0: '蛙' },
+    'uai': { 1: '歪', 2: '怀', 3: '矮', 4: '外', 0: '歪' },
+    'uan': { 1: '弯', 2: '丸', 3: '碗', 4: '万', 0: '弯' },
+    'uang':{ 1: '汪', 2: '王', 3: '网', 4: '望', 0: '汪' },
+    'uo':  { 1: '窝', 2: '我', 3: '我', 4: '卧', 0: '窝' }
+};
+
 function getPhonicsDetails(char) {
     if (!window.pinyinPro) {
         return { pinyin: '', initial: '', final: '', num: 0, isZhengTi: false, spellText: char };
@@ -172,11 +243,16 @@ function getPhonicsDetails(char) {
     const isZhengTi = ZHENG_TI_SYLLABLES.has(pyClean);
     const initialName = INITIAL_SOUNDS[info.initial]?.name || info.initial || '';
 
+    // Convert final to authentic Chinese character pronunciation guide
+    const cleanFinal = removeTone(info.final);
+    const finalGuide = (FINAL_GUIDE_CHARS[cleanFinal] && FINAL_GUIDE_CHARS[cleanFinal][info.num]) || info.final;
+
     let spellText = '';
     if (isZhengTi) {
         spellText = `${char}，是整体认读音节，不用拼，直接读：${char}！`;
     } else if (info.initial) {
-        spellText = `声母 ${initialName}，韵母 ${info.final}，拼读：${initialName}——${info.final}——${char}！`;
+        // e.g. for 旁: '声母 坡，韵母 昂，拼读：坡——昂——旁！'
+        spellText = `声母 ${initialName}，韵母 ${finalGuide}，拼读：${initialName}——${finalGuide}——${char}！`;
     } else {
         spellText = `${char}，单韵母直接读：${char}！`;
     }
@@ -186,6 +262,7 @@ function getPhonicsDetails(char) {
         initial: info.initial,
         initialName,
         final: info.final,
+        finalGuide,
         num: info.num,
         toneName: TONE_NAMES[info.num] || '标准声调',
         isZhengTi,
@@ -217,8 +294,11 @@ window.addEventListener('keydown', (e) => {
 function renderLessonList() {
     mainContent.innerHTML = `
         <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem;">
-            <h2 style="font-family: 'ZCOOL KuaiLe', cursive; color: var(--primary); font-size: 1.6rem;">📚 部编版二年级(下) 课文与生字表</h2>
-            <span style="color: var(--gray); font-size: 0.95rem;">点击课文卡片，进入课文领读、点读与写字表笔顺分解</span>
+            <div>
+                <h2 style="font-family: 'ZCOOL KuaiLe', cursive; color: var(--primary); font-size: 1.6rem;">📚 部编版二年级(下) 课文与生字表</h2>
+                <div style="font-size: 0.85rem; color: #00897B; margin-top: 0.2rem;">✨ 支持 2024 新课标统编教材 · 点击进入课文领读与生字笔顺</div>
+            </div>
+            <span style="color: var(--gray); font-size: 0.95rem;">课文原文 · 拼音点读 · 笔顺步进分解</span>
         </div>
         <div class="lesson-grid" id="lesson-grid"></div>
     `;
@@ -228,7 +308,8 @@ function renderLessonList() {
         const card = document.createElement('div');
         card.className = 'lesson-card';
         const title = lesson.title;
-        const textSnippet = lesson.text ? lesson.text.replace(/\n+/g, ' ').slice(0, 50) + '...' : '';
+        const text = getLessonText(index);
+        const textSnippet = text ? text.replace(/\n+/g, ' ').slice(0, 50) + '...' : '';
 
         card.innerHTML = `
             <div>
@@ -254,16 +335,18 @@ function renderLessonList() {
 function renderLessonView(lessonIndex) {
     stopPlayback();
     const lesson = lessonData[lessonIndex];
+    const text = getLessonText(lessonIndex);
 
     // Split text into sentences for lead reading
-    const sentences = extractSentences(lesson.text || '');
+    const sentences = extractSentences(text);
     currentPlaybackState.sentences = sentences;
     currentPlaybackState.sentenceIndex = 0;
 
     mainContent.innerHTML = `
         <div class="lesson-detail-header">
             <button class="back-btn" id="back-list">⬅ 返回课程列表</button>
-            <div style="display: flex; gap: 0.6rem;">
+            <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+                <button class="action-btn-small" id="btn-open-edit-text" style="background:#FFF; border:1px solid #B0BEC5; font-weight:600; padding:0.45rem 1rem;">✏️ 校对本课原文</button>
                 <button class="action-btn" id="start-lesson-quiz" style="background:var(--secondary); color:#fff;">📝 本课小测验</button>
             </div>
         </div>
@@ -303,7 +386,7 @@ function renderLessonView(lessonIndex) {
                         <option value="1.0">原速 1.0x</option>
                     </select>
                 </div>
-                <span style="font-size: 0.85rem; color: #78909C;">💡 点击课文中任意汉字可点读发音及查看笔顺分解</span>
+                <span style="font-size: 0.85rem; color: #00796B; font-weight:500;">💡 点击任意句子可从该句开始领读；点击汉字可查看笔顺分解</span>
             </div>
         </div>
 
@@ -343,7 +426,7 @@ function renderLessonView(lessonIndex) {
     `;
 
     // Render Article with Ruby Pinyin
-    renderArticleBody(document.getElementById('article-body'), lesson.text);
+    renderArticleBody(document.getElementById('article-body'), text);
 
     // Render Lesson Chars Grid
     const charGrid = document.getElementById('char-grid');
@@ -359,7 +442,7 @@ function renderLessonView(lessonIndex) {
         charGrid.appendChild(card);
     });
 
-    // Event listeners
+    // Navigation & Quiz event listeners
     document.getElementById('back-list').addEventListener('click', () => {
         stopPlayback();
         renderLessonList();
@@ -369,6 +452,14 @@ function renderLessonView(lessonIndex) {
         startQuiz(lesson.chars, lessonIndex);
     });
 
+    // Edit text button
+    document.getElementById('btn-open-edit-text').addEventListener('click', () => {
+        currentEditingLessonIndex = lessonIndex;
+        editTextInput.value = getLessonText(lessonIndex);
+        editTextModal.classList.remove('hidden');
+    });
+
+    // Playback control event listeners
     document.getElementById('btn-start-lead').addEventListener('click', () => {
         startLeadReading('echo');
     });
@@ -395,24 +486,41 @@ function renderLessonView(lessonIndex) {
     document.getElementById('btn-banner-replay').addEventListener('click', replayCurrentSentence);
 }
 
+// Edit text modal actions
+if (closeEditModalBtn) closeEditModalBtn.onclick = () => editTextModal.classList.add('hidden');
+if (btnCancelEdit) btnCancelEdit.onclick = () => editTextModal.classList.add('hidden');
+if (btnResetText) {
+    btnResetText.onclick = () => {
+        if (confirm("确定恢复本课为预设的默认课文吗？")) {
+            resetCustomLessonText(currentEditingLessonIndex);
+            editTextModal.classList.add('hidden');
+            renderLessonView(currentEditingLessonIndex);
+        }
+    };
+}
+if (btnSaveText) {
+    btnSaveText.onclick = () => {
+        const updated = editTextInput.value.trim();
+        if (updated) {
+            saveCustomLessonText(currentEditingLessonIndex, updated);
+            editTextModal.classList.add('hidden');
+            renderLessonView(currentEditingLessonIndex);
+        }
+    };
+}
+
 // ================= Sentence Extraction & Pinyin Body Rendering =================
 function extractSentences(text) {
     if (!text) return [];
-    // Split by punctuation and linebreaks, keep sentences natural
     const rawLines = text.split('\n');
     const sentences = [];
     rawLines.forEach(line => {
         const trimmed = line.trim();
         if (!trimmed) return;
-        // Match sentence segments
-        const parts = trimmed.match(/[^。！？!?；;]+[。！？!?；;]?/g);
-        if (parts && parts.length > 0) {
-            parts.forEach(p => {
-                if (p.trim()) sentences.push(p.trim());
-            });
-        } else {
-            sentences.push(trimmed);
-        }
+        const parts = trimmed.match(/[^。！？!?；;]+[。！？!?；;]?/g) || [trimmed];
+        parts.forEach(p => {
+            if (p.trim()) sentences.push(p.trim());
+        });
     });
     return sentences;
 }
@@ -442,26 +550,26 @@ function renderArticleBody(container, text) {
             sentSpan.className = 'article-sentence';
             sentSpan.dataset.sentenceIndex = sentIndex;
             sentSpan.dataset.text = sent.trim();
+            sentSpan.title = "点击从此句开始朗读";
 
-            // Generate characters with Ruby
-            sentSpan.innerHTML = generateRubyHtmlForSentence(sent);
+            // Generate characters with Ruby & prepend a play badge
+            sentSpan.innerHTML = `<span class="sentence-play-tag" title="从此句开始朗读">▶</span>` + generateRubyHtmlForSentence(sent.trim());
 
             // Add click-to-read and inspect character
             sentSpan.querySelectorAll('.py-char-span').forEach(charSpan => {
                 const char = charSpan.dataset.char;
                 charSpan.addEventListener('click', (e) => {
-                    e.stopPropagation();
+                    e.stopPropagation(); // Don't trigger sentence playback!
                     speakChinese(char, 0.75);
                     openModal(char);
                 });
             });
 
-            // Click sentence to jump reading to this sentence
+            // Click sentence (or play tag): Start reading from this sentence onwards!
             sentSpan.addEventListener('click', () => {
+                currentPlaybackState.isPlaying = true;
                 currentPlaybackState.sentenceIndex = sentIndex;
-                highlightSentence(sentIndex);
-                const sText = currentPlaybackState.sentences[sentIndex] || sent;
-                speakChinese(sText, currentPlaybackState.speed);
+                playCurrentSentence();
             });
 
             pElem.appendChild(sentSpan);
@@ -800,7 +908,7 @@ function renderCustomPracticeView() {
     }
 }
 
-// ================= Character & Phonics & Stroke Order Modal =================
+// ================= Character & Phonics & Stroke Order Modal (Compact, No Scrollbar) =================
 function openModal(char) {
     currentCharacter = char;
     modal.classList.remove('hidden');
@@ -819,12 +927,13 @@ function openModal(char) {
             <div class="phonics-part">
                 <span class="phonics-label">声母:</span>
                 <span class="phonics-val">${phonics.initial}</span>
-                <span style="font-size:0.85rem; color:#888;">(${phonics.initialName})</span>
+                <span style="font-size:0.8rem; color:#888;">(${phonics.initialName})</span>
             </div>
             <span class="phonics-equal">+</span>
             <div class="phonics-part">
                 <span class="phonics-label">韵母:</span>
                 <span class="phonics-val">${phonics.final}</span>
+                <span style="font-size:0.8rem; color:#888;">(${phonics.finalGuide})</span>
             </div>
             <span class="phonics-equal">➔</span>
             <div class="phonics-part">
@@ -837,7 +946,7 @@ function openModal(char) {
             <div class="phonics-part">
                 <span class="phonics-label">单韵母:</span>
                 <span class="phonics-val">${phonics.final || char}</span>
-                <span style="font-size:0.85rem; color:#888;">(直接读音)</span>
+                <span style="font-size:0.8rem; color:#888;">(直接读音)</span>
             </div>
         `;
     }
@@ -851,16 +960,16 @@ function openModal(char) {
         speakChinese(phonics.spellText, 0.75);
     };
 
-    // 2. Hanzi Writer Interactive Canvas
+    // 2. Hanzi Writer Interactive Canvas (Compact 140x140)
     characterDisplay.innerHTML = '';
     writer = null;
 
     setTimeout(() => {
         try {
             writer = HanziWriter.create('character-display', char, {
-                width: 200,
-                height: 200,
-                padding: 5,
+                width: 140,
+                height: 140,
+                padding: 4,
                 showOutline: true,
                 strokeAnimationSpeed: 1,
                 delayBetweenStrokes: 120,
@@ -890,7 +999,7 @@ function openModal(char) {
         }
     }, 80);
 
-    // 3. Static Step-by-Step Stroke Decomposition Strip (For copying on paper!)
+    // 3. Static Step-by-Step Stroke Decomposition Strip (Compact for copying on paper!)
     renderStrokeSequence(char);
 
     // Speak character once on open
@@ -902,9 +1011,10 @@ function closeModal() {
     writer = null;
 }
 
-closeBtn.addEventListener('click', closeModal);
+if (closeCharModalBtn) closeCharModalBtn.addEventListener('click', closeModal);
 window.addEventListener('click', (e) => {
     if (e.target === modal) closeModal();
+    if (e.target === editTextModal) editTextModal.classList.add('hidden');
 });
 
 btnAnimate.addEventListener('click', () => {
@@ -924,7 +1034,7 @@ btnRestart.addEventListener('click', () => {
 
 // Render Step-by-step SVG strokes for paper copybook reference
 async function renderStrokeSequence(char) {
-    strokeStepsContainer.innerHTML = '<span style="color:#90A4AE; font-size:0.9rem;">正在生成笔顺分解...</span>';
+    strokeStepsContainer.innerHTML = '<span style="color:#90A4AE; font-size:0.85rem;">生成笔顺分解中...</span>';
     strokeCountBadge.textContent = '计算笔画中...';
 
     async function fetchCharJson(url) {
@@ -949,7 +1059,7 @@ async function renderStrokeSequence(char) {
     }
 
     if (!data || !data.strokes) {
-        strokeStepsContainer.innerHTML = '<span style="color:#90A4AE; font-size:0.9rem;">(暂无此字分步分解图)</span>';
+        strokeStepsContainer.innerHTML = '<span style="color:#90A4AE; font-size:0.85rem;">(暂无此字分步分解图)</span>';
         strokeCountBadge.textContent = '共 1 字';
         return;
     }
@@ -968,8 +1078,8 @@ async function renderStrokeSequence(char) {
 
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttribute('viewBox', '0 0 1024 1024');
-        svg.setAttribute('width', '44');
-        svg.setAttribute('height', '44');
+        svg.setAttribute('width', '36');
+        svg.setAttribute('height', '36');
 
         const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         g.setAttribute('transform', 'scale(1, -1) translate(0, -900)');
@@ -996,14 +1106,14 @@ async function renderStrokeSequence(char) {
 
         const stepNum = document.createElement('span');
         stepNum.className = 'step-num';
-        stepNum.textContent = `第${i + 1}画`;
+        stepNum.textContent = `${i + 1}`;
         stepCard.appendChild(stepNum);
 
         strokeStepsContainer.appendChild(stepCard);
     }
 }
 
-// ================= Quiz Logic (Preserved) =================
+// ================= Quiz Logic =================
 function startQuiz(scopeChars = null, returnIndex = null) {
     stopPlayback();
     let pool = scopeChars;

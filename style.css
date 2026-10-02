@@ -406,9 +406,37 @@ main {
 
 .article-sentence {
     display: inline;
-    padding: 0.2rem 0.3rem;
+    padding: 0.2rem 0.35rem;
     border-radius: 8px;
-    transition: all 0.25s ease;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.article-sentence:hover {
+    background: rgba(78, 205, 196, 0.12);
+}
+
+.sentence-play-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    background: var(--secondary);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    margin-right: 0.25rem;
+    vertical-align: middle;
+    cursor: pointer;
+    transition: transform 0.15s, background 0.15s;
+    user-select: none;
+}
+
+.sentence-play-tag:hover {
+    transform: scale(1.2);
+    background: var(--primary);
 }
 
 .article-sentence.active-sentence {
@@ -643,42 +671,101 @@ rt {
 
 .modal-content {
     background: var(--white);
-    padding: 2rem;
-    border-radius: 24px;
+    padding: 1.5rem;
+    border-radius: 20px;
     width: 100%;
-    max-width: 680px;
-    max-height: 90vh;
-    overflow-y: auto;
+    max-width: 650px;
     position: relative;
-    box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.22);
+}
+
+.modal-content-compact {
+    overflow: hidden !important; /* No vertical scrollbar! */
+    max-height: 94vh;
 }
 
 .close-btn {
     position: absolute;
-    top: 1rem;
-    right: 1.5rem;
-    font-size: 2.2rem;
+    top: 0.8rem;
+    right: 1.2rem;
+    font-size: 2rem;
     cursor: pointer;
     color: #90A4AE;
     transition: color 0.2s;
     line-height: 1;
+    z-index: 10;
 }
 
 .close-btn:hover {
     color: var(--primary);
 }
 
-.modal-body {
+.modal-compact-layout {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 0.8rem;
 }
 
-/* Character & Phonics Header Section */
-.char-header-section {
-    background: linear-gradient(135deg, #F8FAFC 0%, #EDF2F7 100%);
-    border-radius: 16px;
-    padding: 1.2rem;
+/* Modal Top Row: Left Tianzige + Right Phonics */
+.modal-top-row {
+    display: flex;
+    gap: 1.2rem;
+    align-items: stretch;
+}
+
+.modal-writer-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+#character-display {
+    width: 140px;
+    height: 140px;
+    border: 2px solid #E0E0E0;
+    border-radius: 12px;
+    background-color: #FFF;
+    background-image: 
+        linear-gradient(to right, transparent 49.5%, #FFCDD2 50%, transparent 50.5%),
+        linear-gradient(to bottom, transparent 49.5%, #FFCDD2 50%, transparent 50.5%);
+    background-size: 100% 100%;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+}
+
+.writer-controls {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.action-btn-small {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    background: var(--light);
+    border: 1px solid #CFD8DC;
+    border-radius: 20px;
+    cursor: pointer;
+    color: var(--dark);
+    font-weight: 500;
+    transition: all 0.15s;
+}
+
+.action-btn-small:hover {
+    background: #ECEFF1;
+    border-color: #B0BEC5;
+}
+
+/* Modal Right Col: Phonics & Tone & Audio */
+.modal-phonics-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: #F8FAFC;
+    border-radius: 14px;
+    padding: 0.8rem 1.2rem;
     border: 1px solid #E2E8F0;
     text-align: center;
 }
@@ -687,60 +774,60 @@ rt {
     display: flex;
     align-items: baseline;
     justify-content: center;
-    gap: 0.8rem;
-    margin-bottom: 0.6rem;
+    gap: 0.6rem;
+    margin-bottom: 0.3rem;
 }
 
 .large-pinyin {
-    font-size: 2.6rem;
+    font-size: 2.2rem;
     font-weight: 700;
     color: var(--dark);
     font-family: 'Noto Sans SC', sans-serif;
     letter-spacing: 1px;
+    line-height: 1.1;
 }
 
 .tone-badge {
     background: var(--secondary-light);
     color: #00796B;
-    padding: 0.25rem 0.75rem;
+    padding: 0.2rem 0.6rem;
     border-radius: 20px;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-weight: 600;
 }
 
-/* Phonics Breakdown formula box */
 .phonics-box {
     background: white;
-    border-radius: 12px;
-    padding: 0.8rem 1rem;
-    margin: 0.6rem auto;
-    max-width: 480px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    border-radius: 10px;
+    padding: 0.4rem 0.8rem;
+    margin: 0.3rem auto;
+    width: 100%;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     border: 1px solid #E2E8F0;
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     color: var(--dark);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.8rem;
+    gap: 0.6rem;
     flex-wrap: wrap;
 }
 
 .phonics-part {
     display: inline-flex;
     align-items: baseline;
-    gap: 0.3rem;
+    gap: 0.25rem;
 }
 
 .phonics-label {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--gray);
 }
 
 .phonics-val {
     font-weight: 700;
     color: var(--primary);
-    font-size: 1.15rem;
+    font-size: 1.05rem;
 }
 
 .phonics-equal {
@@ -751,13 +838,13 @@ rt {
 .audio-controls {
     display: flex;
     justify-content: center;
-    gap: 1rem;
-    margin-top: 1rem;
+    gap: 0.8rem;
+    margin-top: 0.5rem;
 }
 
 .action-btn {
-    padding: 0.7rem 1.4rem;
-    font-size: 1rem;
+    padding: 0.5rem 1.1rem;
+    font-size: 0.95rem;
     border: none;
     border-radius: 50px;
     cursor: pointer;
@@ -765,7 +852,7 @@ rt {
     transition: transform 0.15s, box-shadow 0.15s;
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.3rem;
 }
 
 .action-btn:hover {
@@ -784,54 +871,11 @@ rt {
     box-shadow: 0 3px 8px rgba(78, 205, 196, 0.3);
 }
 
-/* Middle: HanziWriter Section */
-.char-writer-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.8rem;
-}
-
-#character-display {
-    width: 200px;
-    height: 200px;
-    border: 3px solid #E0E0E0;
-    border-radius: 16px;
-    background-color: #FFF;
-    background-image: 
-        linear-gradient(to right, transparent 49.5%, #FFCDD2 50%, transparent 50.5%),
-        linear-gradient(to bottom, transparent 49.5%, #FFCDD2 50%, transparent 50.5%);
-    background-size: 100% 100%;
-    box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
-}
-
-.writer-controls {
-    display: flex;
-    gap: 0.6rem;
-}
-
-.action-btn-small {
-    padding: 0.4rem 0.9rem;
-    font-size: 0.9rem;
-    background: var(--light);
-    border: 1px solid #CFD8DC;
-    border-radius: 20px;
-    cursor: pointer;
-    color: var(--dark);
-    font-weight: 500;
-    transition: all 0.15s;
-}
-
-.action-btn-small:hover {
-    background: #ECEFF1;
-    border-color: #B0BEC5;
-}
-
 /* Bottom: Step-by-Step Stroke Decomposition Strip */
 .stroke-sequence-section {
     background: #FAFBFD;
-    border-radius: 16px;
-    padding: 1.2rem;
+    border-radius: 12px;
+    padding: 0.6rem 0.9rem;
     border: 1px solid #E2E8F0;
 }
 
@@ -839,58 +883,59 @@ rt {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.4rem;
 }
 
 .section-title {
     font-weight: 700;
     color: var(--dark);
-    font-size: 1.05rem;
+    font-size: 0.95rem;
 }
 
 .stroke-count-badge {
     background: #E8F5E9;
     color: #2E7D32;
-    padding: 0.2rem 0.6rem;
+    padding: 0.15rem 0.5rem;
     border-radius: 12px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 600;
 }
 
 .stroke-steps-container {
     display: flex;
-    gap: 0.6rem;
+    gap: 0.5rem;
     overflow-x: auto;
-    padding: 0.5rem 0.2rem 1rem 0.2rem;
+    overflow-y: hidden;
+    padding: 0.2rem 0.1rem 0.5rem 0.1rem;
 }
 
 .stroke-steps-container::-webkit-scrollbar {
-    height: 8px;
+    height: 6px;
 }
 
 .stroke-steps-container::-webkit-scrollbar-track {
     background: #ECEFF1;
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
 .stroke-steps-container::-webkit-scrollbar-thumb {
     background: #B0BEC5;
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
 .step-card {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.3rem;
+    gap: 0.2rem;
     flex-shrink: 0;
 }
 
 .step-box {
-    width: 52px;
-    height: 52px;
-    border: 1.5px solid #CFD8DC;
-    border-radius: 8px;
+    width: 44px;
+    height: 44px;
+    border: 1px solid #CFD8DC;
+    border-radius: 6px;
     background-color: #FFF;
     display: flex;
     align-items: center;
@@ -902,7 +947,7 @@ rt {
 }
 
 .step-num {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--gray);
     font-weight: 600;
 }
