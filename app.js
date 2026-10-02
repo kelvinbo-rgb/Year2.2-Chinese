@@ -292,42 +292,78 @@ window.addEventListener('keydown', (e) => {
 
 // ================= Lesson List View =================
 function renderLessonList() {
+    // Group by unit
+    const unitsMap = new Map();
+    lessonData.forEach((lesson, index) => {
+        const u = lesson.unit || '课文列表';
+        if (!unitsMap.has(u)) unitsMap.set(u, []);
+        unitsMap.get(u).push({ lesson, index });
+    });
+
+    const unitNames = Array.from(unitsMap.keys());
+    const pillsHtml = unitNames.map((name, i) => {
+        const shortName = name.split(' · ')[0] || name;
+        return `<button class="unit-nav-pill" onclick="document.getElementById('unit-sec-${i}')?.scrollIntoView({ behavior: 'smooth' })">${shortName}</button>`;
+    }).join('');
+
     mainContent.innerHTML = `
-        <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem;">
+        <div style="margin-bottom: 1.2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.8rem;">
             <div>
                 <h2 style="font-family: 'ZCOOL KuaiLe', cursive; color: var(--primary); font-size: 1.6rem;">📚 部编版二年级(下) 课文与生字表</h2>
-                <div style="font-size: 0.85rem; color: #00897B; margin-top: 0.2rem;">✨ 支持 2024 新课标统编教材 · 点击进入课文领读与生字笔顺</div>
+                <div style="font-size: 0.85rem; color: #00897B; margin-top: 0.2rem;">✨ 2024 新教材统编版 · 同步八个单元课本顺序</div>
             </div>
             <span style="color: var(--gray); font-size: 0.95rem;">课文原文 · 拼音点读 · 笔顺步进分解</span>
         </div>
-        <div class="lesson-grid" id="lesson-grid"></div>
+        <div class="unit-nav-bar">
+            <span class="unit-nav-label">📑 单元直达：</span>
+            ${pillsHtml}
+        </div>
+        <div class="lesson-catalogue-container" id="lesson-catalogue-container"></div>
     `;
-    const grid = document.getElementById('lesson-grid');
+    const container = document.getElementById('lesson-catalogue-container');
 
-    lessonData.forEach((lesson, index) => {
-        const card = document.createElement('div');
-        card.className = 'lesson-card';
-        const title = lesson.title;
-        const text = getLessonText(index);
-        const textSnippet = text ? text.replace(/\n+/g, ' ').slice(0, 50) + '...' : '';
+    let unitIdx = 0;
+    unitsMap.forEach((items, unitName) => {
+        const unitSection = document.createElement('div');
+        unitSection.className = 'unit-section';
+        unitSection.id = `unit-sec-${unitIdx++}`;
 
-        card.innerHTML = `
-            <div>
-                <div class="lesson-title">
-                    <span>${title}</span>
-                    <span style="font-size: 0.85rem; color: var(--secondary); font-weight: normal;">点击进入 ➜</span>
+        const unitHeader = document.createElement('div');
+        unitHeader.className = 'unit-header';
+        unitHeader.innerHTML = `<span class="unit-title-badge">${unitName}</span>`;
+        unitSection.appendChild(unitHeader);
+
+        const grid = document.createElement('div');
+        grid.className = 'lesson-grid';
+
+        items.forEach(({ lesson, index }) => {
+            const card = document.createElement('div');
+            card.className = 'lesson-card';
+            const title = lesson.title;
+            const text = getLessonText(index);
+            const textSnippet = text ? text.replace(/\n+/g, ' ').slice(0, 50) + '...' : '';
+
+            card.innerHTML = `
+                <div>
+                    <div class="lesson-title">
+                        <span>${title}</span>
+                        <span style="font-size: 0.85rem; color: var(--secondary); font-weight: normal;">点击进入 ➜</span>
+                    </div>
+                    <div class="lesson-preview-snippet">${textSnippet}</div>
                 </div>
-                <div class="lesson-preview-snippet">${textSnippet}</div>
-            </div>
-            <div>
-                <div style="font-size: 0.8rem; color: var(--gray); margin-bottom: 0.4rem; font-weight: 500;">本课生字：</div>
-                <div class="preview-chars">
-                    ${lesson.chars.split('').map(c => `<span class="char-chip">${c}</span>`).join('')}
+                <div>
+                    <div style="font-size: 0.8rem; color: var(--gray); margin-bottom: 0.4rem; font-weight: 500;">本课生字：</div>
+                    <div class="preview-chars">
+                        ${lesson.chars.split('').map(c => `<span class="char-chip">${c}</span>`).join('')}
+                    </div>
                 </div>
-            </div>
-        `;
-        card.addEventListener('click', () => renderLessonView(index));
-        grid.appendChild(card);
+            `;
+            card.addEventListener('click', () => renderLessonView(index));
+            grid.appendChild(card);
+        });
+
+        unitSection.appendChild(grid);
+        container.appendChild(unitSection);
     });
 }
 
