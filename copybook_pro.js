@@ -77,8 +77,29 @@ async function renderProCopybook() {
 }
 
 async function drawStrokes(char, target) {
+    // 优先尝试从本地加载，失败后再尝试 CDN
+    const charDataUrl = `./data/${char}.json`;
+    const cdnUrl = `https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/${char}.json`;
+    const altCdnUrl = `https://unpkg.com/hanzi-writer-data@2.0/${char}.json`;
+
+    async function fetchData(url) {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Fetch failed');
+        return await response.json();
+    }
+
     try {
-        const data = await HanziWriter.loadCharacterData(char);
+        let data;
+        try {
+            data = await fetchData(charDataUrl);
+        } catch (e) {
+            try {
+                data = await fetchData(cdnUrl);
+            } catch (e2) {
+                data = await fetchData(altCdnUrl);
+            }
+        }
+
         const strokes = data.strokes;
         const steps = Math.min(strokes.length, 24);
 
@@ -93,26 +114,29 @@ async function drawStrokes(char, target) {
             svg.setAttribute('height', '24');
             
             const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            // HanziWriter 坐标系修正：Y 轴翻转，平移补偿
             g.setAttribute('transform', 'scale(1, -1) translate(0, -900)');
             svg.appendChild(g);
 
+            // 背景底色 (所有笔画)
             strokes.forEach(pathData => {
                 const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 p.setAttribute('d', pathData);
-                p.setAttribute('fill', '#f5f5f5'); 
+                p.setAttribute('fill', 'var(--trace-gray)'); 
                 g.appendChild(p);
             });
 
+            // 笔顺进度 (当前笔画为红色，已完成笔画为黑色)
             for (let j = 0; j <= i; j++) {
                 const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 p.setAttribute('d', strokes[j]);
-                p.setAttribute('fill', j === i ? '#ff0000' : '#333333'); 
+                p.setAttribute('fill', j === i ? 'var(--stroke-red)' : 'var(--char-black)'); 
                 g.appendChild(p);
             }
             stepBox.appendChild(svg);
         }
     } catch (e) {
-        console.error("笔顺加载失败:", char, e);
+        console.error("笔顺渲染失败:", char, e);
     }
 }
 

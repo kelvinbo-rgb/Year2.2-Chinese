@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>二年级(下)生字小助手</title>
+    <title>二年级(下)语文小助手 - 课文领读与拼音笔顺</title>
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=ZCOOL+KuaiLe&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=ZCOOL+KuaiLe&display=swap"
         rel="stylesheet">
     <!-- Styles -->
     <link rel="stylesheet" href="style.css">
@@ -18,29 +18,59 @@
 <body>
     <div id="app">
         <header>
-            <h1>✏️ 二年级(下)生字小助手</h1>
+            <div class="header-left">
+                <h1>✏️ 二年级(下)语文小助手</h1>
+                <span class="sub-badge">课文领读 · 拼音拼读 · 笔顺分解</span>
+            </div>
             <nav>
-                <button id="nav-learn" class="active">生字表</button>
-                <button id="nav-quiz">小测验</button>
+                <button id="nav-learn" class="active">📖 课文与生字</button>
+                <button id="nav-custom">✍️ 随练与语音</button>
+                <button id="nav-quiz">📝 小测验</button>
             </nav>
         </header>
 
         <main id="main-content">
-            <!-- Dynamic Content -->
+            <!-- Dynamic Content rendered by app.js -->
         </main>
 
-        <!-- Modal -->
+        <!-- Upgraded Character & Phonics & Stroke Order Modal -->
         <div id="char-modal" class="modal hidden">
             <div class="modal-content">
                 <span class="close-btn">&times;</span>
                 <div class="modal-body">
-                    <div id="character-display"></div> <!-- Hanzi Writer target -->
-                    <div class="info-panel">
-                        <h2 id="modal-char">字</h2>
-                        <p id="modal-pinyin">pīn yīn</p>
-                        <div class="controls">
-                            <button id="btn-animate" class="action-btn">🖌️ 笔顺</button>
-                            <button id="btn-audio" class="action-btn">🔊 读音</button>
+                    <!-- Top: Character & Pinyin & Phonics -->
+                    <div class="char-header-section">
+                        <div class="pinyin-display-box">
+                            <span id="modal-pinyin" class="large-pinyin">chūn</span>
+                            <span id="modal-tone-badge" class="tone-badge">第1声 (阴平)</span>
+                        </div>
+                        <div id="modal-phonics-box" class="phonics-box">
+                            <!-- Injected: 声母、韵母、拼读公式 -->
+                        </div>
+                        <div class="audio-controls">
+                            <button id="btn-audio" class="action-btn audio-btn-primary">🔊 听字音 (慢速)</button>
+                            <button id="btn-spell" class="action-btn audio-btn-spell">🗣️ 示范拼读</button>
+                        </div>
+                    </div>
+
+                    <!-- Middle: HanziWriter Tianzige -->
+                    <div class="char-writer-section">
+                        <div id="character-display"></div>
+                        <div class="writer-controls">
+                            <button id="btn-animate" class="action-btn-small">▶️ 播放笔顺</button>
+                            <button id="btn-quiz" class="action-btn-small">✏️ 描红练写</button>
+                            <button id="btn-restart" class="action-btn-small">🔄 重新演示</button>
+                        </div>
+                    </div>
+
+                    <!-- Bottom: Step-by-Step Stroke Decomposition Strip (For copying on paper!) -->
+                    <div class="stroke-sequence-section">
+                        <div class="section-title-row">
+                            <span class="section-title">✍️ 笔顺分解（照着在纸上抄写）：</span>
+                            <span id="stroke-count-badge" class="stroke-count-badge">共 0 画</span>
+                        </div>
+                        <div id="stroke-steps-container" class="stroke-steps-container">
+                            <!-- SVGs of step 1, 2, 3... generated dynamically -->
                         </div>
                     </div>
                 </div>

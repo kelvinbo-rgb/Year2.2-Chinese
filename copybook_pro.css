@@ -113,8 +113,7 @@ body {
 .practice-column {
     display: flex;
     flex-direction: column;
-    width: 14.07mm;
-    flex-grow: 1;
+    width: calc(100% / 13);
 }
 
 /* 拼音格优化 */
