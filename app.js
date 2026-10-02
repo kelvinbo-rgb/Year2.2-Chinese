@@ -1002,10 +1002,12 @@ function openModal(char) {
 
     setTimeout(() => {
         try {
+            const displayEl = document.getElementById('character-display');
+            const targetSize = (displayEl && displayEl.clientWidth) ? displayEl.clientWidth : 210;
             writer = HanziWriter.create('character-display', char, {
-                width: 140,
-                height: 140,
-                padding: 4,
+                width: targetSize,
+                height: targetSize,
+                padding: Math.round(targetSize * 0.035),
                 showOutline: true,
                 strokeAnimationSpeed: 1,
                 delayBetweenStrokes: 120,
@@ -1114,8 +1116,8 @@ async function renderStrokeSequence(char) {
 
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttribute('viewBox', '0 0 1024 1024');
-        svg.setAttribute('width', '36');
-        svg.setAttribute('height', '36');
+        svg.setAttribute('width', '46');
+        svg.setAttribute('height', '46');
 
         const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         g.setAttribute('transform', 'scale(1, -1) translate(0, -900)');
