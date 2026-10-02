@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00897B"/>
+      <stop offset="100%" stop-color="#26A69A"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#grad)"/>
+  <!-- Decorative Tianzige background inside icon -->
+  <rect x="76" y="76" width="360" height="360" rx="40" fill="#FFFFFF" fill-opacity="0.15"/>
+  <line x1="76" y1="256" x2="436" y2="256" stroke="#FFFFFF" stroke-opacity="0.3" stroke-width="4" stroke-dasharray="8 8"/>
+  <line x1="256" y1="76" x2="256" y2="436" stroke="#FFFFFF" stroke-opacity="0.3" stroke-width="4" stroke-dasharray="8 8"/>
+  <text x="256" y="340" font-family="'Noto Sans SC', 'Microsoft YaHei', sans-serif" font-weight="900" font-size="260" fill="#FFFFFF" text-anchor="middle">语</text>
+</svg>

@@ -69,6 +69,41 @@ function setActiveNav(tab) {
     else if (tab === 'quiz') navQuiz.classList.add('active');
 }
 
+// Fullscreen API toggle
+const navFullscreen = document.getElementById('nav-fullscreen');
+if (navFullscreen) {
+    navFullscreen.addEventListener('click', () => {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            const el = document.documentElement;
+            if (el.requestFullscreen) {
+                el.requestFullscreen().catch(() => {});
+            } else if (el.webkitRequestFullscreen) {
+                el.webkitRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        }
+    });
+
+    const updateFullscreenBtn = () => {
+        const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        if (isFull) {
+            navFullscreen.innerHTML = '🗗 退出全屏';
+            navFullscreen.classList.add('in-fullscreen');
+        } else {
+            navFullscreen.innerHTML = '⛶ 全屏';
+            navFullscreen.classList.remove('in-fullscreen');
+        }
+    };
+
+    document.addEventListener('fullscreenchange', updateFullscreenBtn);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenBtn);
+}
+
 // ================= Lesson Text Helper (Supports 2024 New Edition Calibration) =================
 function getLessonText(lessonIndex) {
     const custom = localStorage.getItem('custom_lesson_text_' + lessonIndex);

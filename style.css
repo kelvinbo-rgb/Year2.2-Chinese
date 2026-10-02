@@ -93,6 +93,29 @@ nav button.active {
     box-shadow: 0 2px 6px rgba(78, 205, 196, 0.4);
 }
 
+nav button.btn-fullscreen-toggle {
+    background: #E0F2F1;
+    color: #00796B;
+    border: 1px solid #80CBC4;
+    border-radius: 30px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+nav button.btn-fullscreen-toggle:hover {
+    background: #00897B;
+    color: white;
+}
+
+nav button.btn-fullscreen-toggle.in-fullscreen {
+    background: #FFF3E0;
+    color: #E65100;
+    border-color: #FFE082;
+}
+
 main {
     padding: 1.5rem 2rem;
     max-width: 1200px;
