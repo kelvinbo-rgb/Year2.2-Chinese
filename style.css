@@ -1143,40 +1143,97 @@ rt {
     text-align: left;
 }
 
-/* ================== Mobile Phones Only (Portrait < 480px) ================== */
-@media (max-width: 480px) {
+/* ================== Mobile Phones Only (Portrait < 600px) ================== */
+@media (max-width: 600px) {
     .modal-content-compact {
-        width: 96vw;
-        max-width: 100%;
-        padding: 1.2rem 0.8rem;
-        border-radius: 18px;
+        width: 95vw;
+        max-width: 420px;
+        padding: 1.2rem 1rem;
+        border-radius: 20px;
+        overflow-y: auto !important; /* Allow scroll if needed on short phones */
+        max-height: 92vh;
+    }
+
+    .modal-compact-layout {
+        gap: 0.8rem;
     }
 
     .modal-top-row {
-        gap: 0.6rem;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .modal-writer-col {
+        width: 100%;
+        gap: 0.5rem;
     }
 
     #character-display {
-        width: 140px;
-        height: 140px;
+        width: 150px;
+        height: 150px;
+    }
+
+    .writer-controls {
+        gap: 0.6rem;
+    }
+
+    .action-btn-small {
+        padding: 0.4rem 0.9rem;
+        font-size: 0.9rem;
+    }
+
+    .modal-phonics-col {
+        width: 100%;
+        padding: 0.75rem 0.9rem;
+        border-radius: 14px;
     }
 
     .large-pinyin {
-        font-size: 2.2rem;
+        font-size: 2.3rem;
+    }
+
+    .tone-badge {
+        font-size: 0.85rem;
+        padding: 0.2rem 0.6rem;
     }
 
     .phonics-box {
-        font-size: 0.92rem;
-        padding: 0.35rem 0.5rem;
+        font-size: 0.95rem;
+        padding: 0.4rem 0.7rem;
+        margin: 0.3rem auto;
     }
 
-    .step-box {
-        width: 44px;
-        height: 44px;
+    .audio-controls {
+        gap: 0.8rem;
+        margin-top: 0.5rem;
     }
 
     .action-btn {
-        padding: 0.5rem 0.85rem;
-        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    .stroke-sequence-section {
+        padding: 0.6rem 0.8rem;
+        border-radius: 14px;
+    }
+
+    .section-title {
+        font-size: 0.95rem;
+    }
+
+    .stroke-count-badge {
+        font-size: 0.85rem;
+        padding: 0.15rem 0.5rem;
+    }
+
+    .step-box {
+        width: 46px;
+        height: 46px;
+    }
+
+    .step-num {
+        font-size: 0.8rem;
     }
 }
