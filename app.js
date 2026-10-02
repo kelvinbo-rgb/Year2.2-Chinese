@@ -5,7 +5,6 @@ const modal = document.getElementById('char-modal');
 const closeCharModalBtn = document.getElementById('close-char-modal');
 const btnAnimate = document.getElementById('btn-animate');
 const btnQuiz = document.getElementById('btn-quiz');
-const btnRestart = document.getElementById('btn-restart');
 const btnAudio = document.getElementById('btn-audio');
 const btnSpell = document.getElementById('btn-spell');
 const characterDisplay = document.getElementById('character-display');
@@ -754,6 +753,10 @@ function renderCustomPracticeView() {
                     </button>
                 </div>
 
+                <div class="voice-tablet-tip">
+                    💡 <b>平板/手机小贴士</b>：如果点击上方麦克风一直提示倾听但无反应，可以直接点击输入框，调出平板软键盘自带的【麦克风/语音键 🎙️】（如华为/讯飞/搜狗输入法），本地识别极快且无需额外配置！
+                </div>
+
                 <div class="quick-sample-tags">
                     <span>快捷示例：</span>
                     <span class="sample-tag" data-val="春天来了！春天像个害羞的小姑娘。">找春天</span>
@@ -821,61 +824,107 @@ function renderCustomPracticeView() {
     const analyzeBtn = document.getElementById('btn-analyze-custom');
     const clearBtn = document.getElementById('btn-clear-custom');
 
-    // Speech Recognition setup
+    // Speech Recognition setup (Robust for tablets & mobiles)
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition = null;
     let isListening = false;
-
-    if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
-        recognition.lang = 'zh-CN';
-        recognition.continuous = false;
-        recognition.interimResults = false;
-
-        recognition.onstart = () => {
-            isListening = true;
-            voiceBtn.classList.add('listening');
-            micLabel.textContent = "正在倾听，请说话...";
-            micIcon.textContent = "🔴";
-        };
-
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            if (transcript) {
-                inputArea.value = (inputArea.value + ' ' + transcript).trim();
-                triggerCustomAnalysis();
-            }
-        };
-
-        recognition.onerror = (e) => {
-            console.warn("Speech recognition error:", e);
-            resetVoiceBtn();
-        };
-
-        recognition.onend = () => {
-            resetVoiceBtn();
-        };
-    }
+    let recognitionWatchdog = null;
 
     function resetVoiceBtn() {
+        if (recognitionWatchdog) {
+            clearTimeout(recognitionWatchdog);
+            recognitionWatchdog = null;
+        }
         isListening = false;
-        voiceBtn.classList.remove('listening');
-        micLabel.textContent = "孩子语音输入";
-        micIcon.textContent = "🎤";
+        if (voiceBtn) {
+            voiceBtn.classList.remove('listening');
+            micLabel.textContent = "孩子语音输入";
+            micIcon.textContent = "🎤";
+        }
+    }
+
+    if (SpeechRecognition) {
+        try {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'zh-CN';
+            recognition.continuous = false;
+            recognition.interimResults = true;
+
+            recognition.onstart = () => {
+                isListening = true;
+                voiceBtn.classList.add('listening');
+                micLabel.textContent = "正在倾听，点击可停止...";
+                micIcon.textContent = "🔴";
+
+                // Safety Watchdog: 8 seconds timeout
+                if (recognitionWatchdog) clearTimeout(recognitionWatchdog);
+                recognitionWatchdog = setTimeout(() => {
+                    if (isListening) {
+                        try { recognition.abort(); } catch(e){}
+                        resetVoiceBtn();
+                        alert("⏱️ 语音监听超时（未收到结果）。\n\n💡 推荐技巧：直接点击输入框，使用平板输入法自带的【麦克风语音键 🎙️】说话，识别极快极准！");
+                    }
+                }, 8000);
+            };
+
+            recognition.onresult = (event) => {
+                if (recognitionWatchdog) {
+                    clearTimeout(recognitionWatchdog);
+                    recognitionWatchdog = null;
+                }
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                }
+                if (!transcript && event.results[0] && event.results[0][0]) {
+                    transcript = event.results[0][0].transcript;
+                }
+                if (transcript) {
+                    inputArea.value = (inputArea.value + ' ' + transcript).trim();
+                    resetVoiceBtn();
+                    triggerCustomAnalysis();
+                }
+            };
+
+            recognition.onerror = (e) => {
+                console.warn("Speech recognition error:", e);
+                resetVoiceBtn();
+                let hint = "";
+                if (e.error === 'network') {
+                    hint = "⚠️ 网页语音无法联网连接（平板系统因未集成谷歌语音服务通常无法通过网页直接听写）。\n\n💡 解决办法：直接点击上方输入框，使用平板键盘自带的【麦克风语音键 🎙️】（如华为/讯飞/搜狗输入法），本地识别极快！";
+                } else if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                    hint = "⚠️ 麦克风权限未开启，请在平板浏览器或系统设置中允许使用麦克风。";
+                } else if (e.error === 'no-speech') {
+                    hint = "未听到说话声，请靠近麦克风再试一次。";
+                }
+                if (hint) alert(hint);
+            };
+
+            recognition.onend = () => {
+                resetVoiceBtn();
+            };
+        } catch(err) {
+            console.warn("Speech recognition init failed:", err);
+            recognition = null;
+        }
     }
 
     voiceBtn.addEventListener('click', () => {
-        if (!SpeechRecognition) {
-            alert("您的浏览器暂不支持麦克风语音听写。请直接在输入框打字或粘贴内容~");
+        if (!SpeechRecognition || !recognition) {
+            alert("您的平板浏览器暂不支持网页直接录音听写。\n\n💡 建议：直接点击输入框，使用平板键盘自带的【麦克风语音键 🎙️】说话输入！");
             return;
         }
         if (isListening) {
-            recognition.stop();
+            try { recognition.abort(); } catch(e){}
+            resetVoiceBtn();
         } else {
             try {
                 recognition.start();
             } catch (err) {
                 console.error("Recognition start failed:", err);
+                resetVoiceBtn();
             }
         }
     });
@@ -1056,18 +1105,14 @@ window.addEventListener('click', (e) => {
 });
 
 btnAnimate.addEventListener('click', () => {
-    if (writer) writer.animateCharacter();
-});
-
-btnQuiz.addEventListener('click', () => {
-    if (writer) writer.quiz();
-});
-
-btnRestart.addEventListener('click', () => {
     if (writer) {
         writer.hideCharacter();
         writer.animateCharacter();
     }
+});
+
+btnQuiz.addEventListener('click', () => {
+    if (writer) writer.quiz();
 });
 
 // Render Step-by-step SVG strokes for paper copybook reference
