@@ -278,31 +278,151 @@ function checkUrlSync() {
     return false;
 }
 
-// Curated 2nd-grade story templates for lessons
-const LESSON_STORY_TEMPLATES = {
-    0: "春天像一位害羞的小姑娘，迈着轻盈的脚步来到了田野。微风轻轻吹拂，小草悄悄探出头来，树枝上吐出了嫩绿的嫩芽。我们高兴地脱掉厚厚的棉袄，奔向广阔的田野，到处寻找春天的足迹。你看，路边的野花在微风中轻轻点头，阳光温暖地照耀着大家。只要我们用心发现，生活处处都是美好的春天！",
-    1: "早春二月，杨柳吐出嫩绿的丝绦，微风轻轻吹拂着水面。放学回来的孩子们奔跑在碧绿的原野上，高高放起彩色的风筝。温暖的春风像一把神奇的剪刀，把大自然打扮得生机勃勃。",
-    2: "鼹鼠先生去邮局取了一个大包裹。松鼠太太和刺猬太太都好奇地围了过来。一路上，花籽悄悄洒落在泥土里。到了夏天，门前开满了五颜六色绚丽的花朵，大家心里乐开了花，这是一份多么美好的礼物呀！",
-    3: "阳光明媚的天气里，大家手拿铁锹兴高采烈地来到公园里植树。我们在泥土里挖好坑，小心翼翼地把绿色的柏树苗栽进土里。经过辛勤的汗水浇灌，小树苗像战士一样笔直地站立着，为大地增添了一抹生机。",
-    4: "清晨的小路旁挂满了晶莹的露珠。小溪哗哗流淌，大娘和孩子们在溪边漫步。遇到有困难的行人，大家热情地伸出援助之手。无论走到哪里，雷锋叔叔那助人为乐的精神都温暖着每一个人的心灵。",
-    5: "爸爸拿来一块普通的米糕，微风吹拂着田野。你知道吗？为了制作这块糕点，需要农夫辛勤耕种大米，糖农熬制甘甜的糖浆，还需要包装和运输工人的默默奉献。大家团结合作，才有了香甜可口的千人糕！",
-    6: "郊外的小河边绿草如茵，垂柳依依。妹妹走得累了，恋恋不舍地望着远方。爸爸随手拾起一根漂亮的柳树枝，当成一匹出色的神马。妹妹骑着骏马飞快地奔跑回家，欢快的笑声回荡在温馨的小道上。"
+// ================= Child's Favorite Highlighter Color Theme =================
+function getHighlightColor() {
+    return localStorage.getItem('child_focus_color') || 'yellow';
+}
+
+function setHighlightColor(color) {
+    localStorage.setItem('child_focus_color', color);
+    applyHighlightColorTheme();
+}
+
+function applyHighlightColorTheme() {
+    const color = getHighlightColor();
+    const appEl = document.getElementById('app') || document.body;
+    appEl.classList.remove('theme-yellow', 'theme-pink', 'theme-green', 'theme-blue');
+    appEl.classList.add(`theme-${color}`);
+}
+
+// ================= Zero-Unfamiliar-Word Sentence & Micro Story Engine =================
+// Mapping common Grade 2 lesson vocabulary to 100% Grade 1-simple everyday sentences
+const WORD_SIMPLE_SENTENCES = {
+    // 动作与常用字词
+    '脱掉': '天气变暖和了，我们脱掉了厚厚的外套。',
+    '脱': '天气暖和了，我脱下外套去草地上玩。',
+    '棉袄': '春天来啦，大家不用再穿大棉袄了。',
+    '袄': '天气不冷了，大家收起了棉袄。',
+    '寻找': '我和好朋友一起去草地上寻找春天。',
+    '寻': '小鸟在树林里四处寻找好吃的果子。',
+    '嫩芽': '看，树枝上长出了绿绿的嫩芽！',
+    '芽': '小树发芽了，长出了可爱的新芽。',
+    '野花': '草地上开满了美丽的小野花。',
+    '探出': '小草悄悄从泥土里探出了头。',
+    '探': '小兔从洞里探出头来，好奇地四处看。',
+    '触到': '温暖的春风轻轻触到了我的小脸。',
+    '触': '我用手轻轻触了一下绿绿的叶子。',
+    '羞': '妹妹低下了头，笑得害羞又好看。',
+    '遮掩': '春天藏在树林后，和我们玩捉迷藏。',
+    '碧玉': '大树绿绿的，像一块美丽的碧玉。',
+    '妆成': '春风把大地妆成了绿色的乐园。',
+    '丝绦': '长长的柳树枝，像绿色的丝绦。',
+    '剪刀': '春风像一把神奇的小剪刀。',
+    '剪': '我们用小剪刀剪出了好看的窗花。',
+    '裁': '春风像神奇的裁缝，剪出满天绿叶。',
+    '纸鸢': '天空中飞着高高的彩色纸鸢。',
+    '包裹': '小动物们收到了一个大大的包裹。',
+    '花籽': '泥土里埋下了很多神奇的花籽。',
+    '绚丽': '门前开满了绚丽多彩的花儿。',
+    '礼物': '这是好朋友送给我最好的礼物。',
+    '邮局': '我和妈妈一起去邮局寄信。',
+    '树苗': '我们在小路边栽下了一棵绿绿的树苗。',
+    '笔直': '小树笔直地站在阳光下。',
+    '满意': '看着绿绿的公园，大家心里很满意。',
+    '休息': '玩累了，大家坐在大树下休息。',
+    '雷锋': '雷锋叔叔是一个助人为乐的好榜样。',
+    '叔叔': '路边的叔叔热心地帮助了小朋友。',
+    '足迹': '我们在沙滩上留下了快乐的足迹。',
+    '泥泞': '下过雨后，山里的小路变得泥泞。',
+    '晶莹': '草叶上有一颗颗晶莹的小露珠。',
+    '米糕': '这块米糕吃起来又香又甜。',
+    '特别': '今天的天气格外好，心情也特别棒。',
+    '劳动': '通过认真的劳动，大家得到了好成果。',
+    '骏马': '草原上有一匹飞快奔跑的骏马。',
+    '跨上': '弟弟高兴地跨上了小木马。',
+    '蹦跳': '小兔子在青草地上快乐地蹦跳。',
+    '神州': '我们的大好神州风景美丽如画。',
+    '传统': '春节是大家最喜欢的传统节日。',
+    '贴春联': '过年的时候，全家人一起贴春联。',
+    '龙舟': '端午节的时候，河面上在赛龙舟。',
+    '月饼': '中秋节的晚上，大家一起分吃甜甜的月饼。',
+    '美食': '餐桌上摆满了香喷喷的中华美食。',
+    '红烧': '妈妈做了一盘好吃的红烧鱼。',
+    '茄子': '菜园里长出了紫色的长茄子。',
+    '彩色': '我的铅笔盒里有许多彩色的蜡笔。',
+    '森林': '大森林里到处都是高高的大树。',
+    '苹果': '果树上结出了红红的大苹果。',
+    '城堡': '我们在沙滩上搭起了一座漂亮的城堡。',
+    '亡羊补牢': '只要及时改正错误，就能亡羊补牢。',
+    '揠苗助长': '做事不能心急，揠苗助长是行不通的。',
+    '指南针': '大自然有许多天然的指南针。',
+    '雷雨': '夏天的下午经常会下一场大雷雨。',
+    '乌云': '满天的乌云黑沉沉地压了下来。',
+    '闪电': '天空中闪过一道亮晶晶的闪电。',
+    '彩虹': '大雨停了，天边挂起了一道美丽的彩虹。',
+    '大象': '大象有一对像扇子一样的大耳朵。',
+    '围巾': '冬天出门时，妈妈给我围上了暖和的围巾。',
+    '泥塘': '小青蛙在池塘边的小泥塘里快乐地游泳。',
+    '祖先': '在遥远的过去，祖先们生活在美丽的森林里。',
+    '摇篮': '绿绿的大树是小鸟们温暖的摇篮。'
 };
 
-function generateDynamicStory(lessonIndex, focusWords) {
-    let base = LESSON_STORY_TEMPLATES[lessonIndex];
-    if (!base) {
-        const lesson = lessonData[lessonIndex] || {};
-        base = `今天阳光灿烂，大家在快乐地学习《${lesson.title || '本课'}》。大自然就像一本生动的画卷，到处充满着惊喜与智慧。只要我们认真观察生活，勤于动笔，每一天都能收获满满的快乐与知识！`;
+function generateSimpleSentenceForWord(word, variantIndex = 0) {
+    const clean = (word || '').trim();
+    if (!clean) return '';
+    if (WORD_SIMPLE_SENTENCES[clean]) {
+        return WORD_SIMPLE_SENTENCES[clean];
+    }
+    // Universal 100% Grade 1-simple patterns for any custom word
+    const patterns = [
+        `今天天气真好，我们一起在草地上看到了【${clean}】。`,
+        `看，小明指着前面开心地说：“这里有【${clean}】呀！”`,
+        `我和好朋友一起认真学习，学会了读写【${clean}】。`,
+        `我们一边在公园里走着，一边找到了【${clean}】。`,
+        `小鸟在树上叫着，好像在对我们说【${clean}】呢！`
+    ];
+    return patterns[variantIndex % patterns.length];
+}
+
+function generateDynamicStory(lessonIndex, focusWords, storyType = 'story', seed = 0) {
+    if (!focusWords || focusWords.length === 0) {
+        return "本课还没有圈选重点词。点击上方【✏️ 圈选生字词】在课文中点选几个字词，这里就会自动使用一年级最简单的常用字生成专属于你的极简小故事哦！";
     }
 
-    if (focusWords && focusWords.length > 0) {
-        const missing = focusWords.filter(w => !base.includes(w));
-        if (missing.length > 0) {
-            base += `\n小树林里的小动物们也来做客了。大家一起温习了【${missing.join('、')}】这些好词好句，在温暖的微风中开心地朗诵起来！`;
-        }
+    // Mode B: 逐词造句连珠 (One simple sentence per word)
+    if (storyType === 'sentences') {
+        const lines = focusWords.map((w, idx) => {
+            const sent = generateSimpleSentenceForWord(w, seed + idx);
+            return `${idx + 1}. 【${w}】：${sent}`;
+        });
+        return lines.join('\n');
     }
-    return base;
+
+    // Mode A: 极简串词微故事 (Zero Unfamiliar Word Micro-Story)
+    const openers = [
+        "今天天气真好，太阳暖洋洋地照在大地上。",
+        "春天来到了人间，微风轻轻吹过小树林。",
+        "放学了，我和好朋友一起高高兴兴地去公园玩。",
+        "大森林里真热闹，绿绿的草地上开满了美丽的花。"
+    ];
+    const closers = [
+        "大家心里别提多高兴啦，今天真是快乐的一天！",
+        "小动物们都开心地笑了，大自然可真美丽呀！",
+        "我们学到了新本领，开开心心地回家了！",
+        "大家互相看了看，都忍不住笑出了声！"
+    ];
+
+    const opener = openers[seed % openers.length];
+    const closer = closers[seed % closers.length];
+
+    const middleSentences = [];
+    focusWords.forEach((w, idx) => {
+        let sent = generateSimpleSentenceForWord(w, seed + idx);
+        sent = sent.replace(/^.*【.*?】：/, '');
+        middleSentences.push(sent);
+    });
+
+    return `${opener}\n${middleSentences.join('\n')}\n${closer}`;
 }
 
 // Generate 3 clever distractors for 4-choice pinyin quiz
@@ -792,14 +912,21 @@ function renderLessonView(lessonIndex) {
         <div class="focus-words-bank-card" id="focus-words-bank-card">
             <div class="focus-words-header">
                 <div class="focus-words-title">
-                    <span>⭐ 本课重点字词库</span>
-                    <span style="font-size:0.85rem; color:var(--gray); font-family:'Noto Sans SC';">
-                        (已标记 <b id="focus-words-count">0</b> 个词，在挖空自测与小故事中重点考察)
-                    </span>
+                    <span>⭐ 本课重点生字词</span>
+                    <span class="focus-words-counter-badge">(今日必学 <b id="focus-words-count">0</b> 个)</span>
                 </div>
-                <div class="focus-add-inline">
-                    <input type="text" id="input-add-focus-word" class="focus-add-input" placeholder="输入生字或词语" maxlength="10">
-                    <button id="btn-add-focus-input" class="btn-add-focus-word">➕添加</button>
+                <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+                    <div class="color-picker-group">
+                        <span style="font-size:0.8rem; color:var(--gray); font-weight:600;">荧光色：</span>
+                        <button class="color-dot-btn color-dot-yellow ${getHighlightColor() === 'yellow' ? 'active' : ''}" data-color="yellow" title="阳光黄"></button>
+                        <button class="color-dot-btn color-dot-pink ${getHighlightColor() === 'pink' ? 'active' : ''}" data-color="pink" title="樱花粉"></button>
+                        <button class="color-dot-btn color-dot-green ${getHighlightColor() === 'green' ? 'active' : ''}" data-color="green" title="苹果绿"></button>
+                        <button class="color-dot-btn color-dot-blue ${getHighlightColor() === 'blue' ? 'active' : ''}" data-color="blue" title="晴空蓝"></button>
+                    </div>
+                    <div class="focus-add-inline">
+                        <input type="text" id="input-add-focus-word" class="focus-add-input" placeholder="输入生字或词语" maxlength="10">
+                        <button id="btn-add-focus-input" class="btn-add-focus-word">➕添加</button>
+                    </div>
                 </div>
             </div>
             <div class="focus-words-chips-container" id="focus-words-chips-container"></div>
@@ -831,6 +958,9 @@ function renderLessonView(lessonIndex) {
         </div>
     `;
 
+    // Apply highlighter theme
+    applyHighlightColorTheme();
+
     // Render Focus Words Bank Chips
     renderFocusWordsBank(lessonIndex);
 
@@ -840,18 +970,29 @@ function renderLessonView(lessonIndex) {
         clozeMode: currentClozeMode
     });
 
-    // Render Lesson Chars Grid
+    // Render Lesson Chars Grid with Today's Focus Card Highlight
     const charGrid = document.getElementById('char-grid');
+    const activeFocusWords = getFocusWords(lessonIndex);
     lesson.chars.split('').forEach(char => {
         const card = document.createElement('div');
-        card.className = 'char-card';
+        const isTodayFocus = activeFocusWords.some(w => w.includes(char));
+        card.className = `char-card ${isTodayFocus ? 'is-today-focus-card' : ''}`;
         const py = window.pinyinPro ? window.pinyinPro.pinyin(char) : '';
         card.innerHTML = `
+            ${isTodayFocus ? '<span class="today-focus-card-badge">⭐ 今日必学</span>' : ''}
             <div class="char-card-char">${char}</div>
             <div class="char-card-pinyin">${py}</div>
         `;
         card.addEventListener('click', () => openModal(char));
         charGrid.appendChild(card);
+    });
+
+    // Highlighter Color picker dot listeners
+    document.querySelectorAll('.color-dot-btn').forEach(btn => {
+        btn.onclick = () => {
+            setHighlightColor(btn.dataset.color);
+            renderLessonView(lessonIndex);
+        };
     });
 
     // Navigation & Quiz event listeners
@@ -1876,6 +2017,9 @@ if (closePinyinQuizBtn) {
 }
 
 // ================= Focus Words Mini Story Modal Logic =================
+let currentStoryType = 'story'; // 'story' (极简微故事) or 'sentences' (逐词造句连珠)
+let storyVariantSeed = 0;
+
 function openStoryModal(lessonIndex) {
     if (!storyModal) return;
     storyModal.classList.remove('hidden');
@@ -1891,12 +2035,20 @@ function openStoryModal(lessonIndex) {
 
     currentStoryText = getCustomStory(lessonIndex);
     if (!currentStoryText) {
-        currentStoryText = generateDynamicStory(lessonIndex, words);
+        currentStoryText = generateDynamicStory(lessonIndex, words, currentStoryType, storyVariantSeed);
     }
 
+    updateStoryTypeButtons();
     storyClozeMode = 'normal';
     updateStoryClozeButtons();
     renderStoryContent(lessonIndex);
+}
+
+function updateStoryTypeButtons() {
+    const btnMicro = document.getElementById('btn-story-type-micro');
+    const btnSentences = document.getElementById('btn-story-type-sentences');
+    if (btnMicro) btnMicro.classList.toggle('active', currentStoryType === 'story');
+    if (btnSentences) btnSentences.classList.toggle('active', currentStoryType === 'sentences');
 }
 
 function updateStoryClozeButtons() {
@@ -1984,10 +2136,38 @@ function stopStoryPlayback() {
 if (btnStoryLead) btnStoryLead.onclick = startStoryLead;
 if (btnStoryStop) btnStoryStop.onclick = stopStoryPlayback;
 
+const btnStoryTypeMicro = document.getElementById('btn-story-type-micro');
+const btnStoryTypeSentences = document.getElementById('btn-story-type-sentences');
+
+if (btnStoryTypeMicro) {
+    btnStoryTypeMicro.onclick = () => {
+        currentStoryType = 'story';
+        updateStoryTypeButtons();
+        const words = getFocusWords(currentLessonIndex);
+        currentStoryText = generateDynamicStory(currentLessonIndex, words, currentStoryType, storyVariantSeed);
+        saveCustomStory(currentLessonIndex, currentStoryText);
+        if (storyEditorContainer) storyEditorContainer.style.display = 'none';
+        renderStoryContent(currentLessonIndex);
+    };
+}
+
+if (btnStoryTypeSentences) {
+    btnStoryTypeSentences.onclick = () => {
+        currentStoryType = 'sentences';
+        updateStoryTypeButtons();
+        const words = getFocusWords(currentLessonIndex);
+        currentStoryText = generateDynamicStory(currentLessonIndex, words, currentStoryType, storyVariantSeed);
+        saveCustomStory(currentLessonIndex, currentStoryText);
+        if (storyEditorContainer) storyEditorContainer.style.display = 'none';
+        renderStoryContent(currentLessonIndex);
+    };
+}
+
 if (btnAiGenStory) {
     btnAiGenStory.onclick = () => {
+        storyVariantSeed++;
         const words = getFocusWords(currentLessonIndex);
-        currentStoryText = generateDynamicStory(currentLessonIndex, words);
+        currentStoryText = generateDynamicStory(currentLessonIndex, words, currentStoryType, storyVariantSeed);
         saveCustomStory(currentLessonIndex, currentStoryText);
         if (storyEditorContainer) storyEditorContainer.style.display = 'none';
         renderStoryContent(currentLessonIndex);
@@ -2157,6 +2337,7 @@ function setupTextSelectionHandler() {
 }
 
 // ================= Initial Load & URL Sync Check =================
+applyHighlightColorTheme();
 setupTextSelectionHandler();
 const hasSynced = checkUrlSync();
 if (!hasSynced) {

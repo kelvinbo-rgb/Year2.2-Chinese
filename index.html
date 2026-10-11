@@ -132,12 +132,21 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.8rem;">
                     <div>
                         <h3 style="font-family:'ZCOOL KuaiLe'; color:var(--primary); font-size:1.5rem;">✨ 重点词串成小故事</h3>
-                        <div style="font-size:0.85rem; color:var(--gray);">把选出的生词融入趣味短篇，让孩子在生动语境中全面掌握拼音与汉字</div>
+                        <div style="font-size:0.85rem; color:var(--gray);">仅用一年级极简常用字与生词组合，绝无陌生生字负担</div>
                     </div>
-                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                        <button id="btn-ai-gen-story" class="action-btn-small" style="background:#E0F2F1; color:#00796B; border-color:#80CBC4; font-weight:700;">🤖 智能生成故事</button>
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                        <div class="cloze-switcher" id="story-type-switcher">
+                            <button class="cloze-btn active" id="btn-story-type-micro" data-type="story" title="极简场景小故事">📖 极简微故事</button>
+                            <button class="cloze-btn" id="btn-story-type-sentences" data-type="sentences" title="一个生词造一句简单句">🎯 逐词造句连珠</button>
+                        </div>
+                        <button id="btn-ai-gen-story" class="action-btn-small" style="background:#E0F2F1; color:#00796B; border-color:#80CBC4; font-weight:700;">🔄 换一种组合</button>
                         <button id="btn-edit-story-text" class="action-btn-small" style="background:#FFF; border-color:#B0BEC5;">✏️ 自由创编</button>
                     </div>
+                </div>
+
+                <!-- Zero Unfamiliar Word Banner -->
+                <div style="font-size:0.82rem; color:#00695C; background:#E0F2F1; padding:0.4rem 0.8rem; border-radius:8px; margin-bottom:0.8rem; display:flex; align-items:center; gap:6px;">
+                    <span>🌱 <b>零新字负担</b>：仅使用一年级最简单的最基础字（如“我和好朋友、今天天气真好、开开心心”）组合，绝无多余陌生生词！</span>
                 </div>
 
                 <!-- Story Cloze Switcher & Audio Bar -->

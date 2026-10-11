@@ -627,6 +627,35 @@ rt {
     box-shadow: var(--shadow);
 }
 
+.char-card.is-today-focus-card {
+    border: 2.5px solid #FF922B !important;
+    background-color: #FFF9DB !important;
+    box-shadow: 0 4px 14px rgba(255, 146, 43, 0.35) !important;
+    transform: translateY(-2px);
+    position: relative;
+}
+
+.today-focus-card-badge {
+    position: absolute;
+    top: -9px;
+    right: -6px;
+    background: #E64980;
+    color: #FFF;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(230, 73, 128, 0.4);
+    letter-spacing: 0.5px;
+    user-select: none;
+    z-index: 2;
+}
+
+.char-card.is-today-focus-card .char-card-char {
+    color: #D9480F !important;
+    font-weight: 700;
+}
+
 .char-card-char {
     font-size: 2.8rem;
     font-family: 'KaiTi', '楷体', serif;
@@ -1451,9 +1480,109 @@ rt {
 
 /* Article Styling when Focus Words are active */
 .is-focus-word {
-    border-bottom: 2px dashed #FF9800;
-    background: rgba(255, 235, 59, 0.22);
-    border-radius: 4px;
+    display: inline-block;
+    padding: 0 4px;
+    border-radius: 6px;
+    font-weight: 700 !important;
+    transition: all 0.2s ease;
+}
+
+/* Default Theme: 阳光黄 (Yellow/Amber) */
+.theme-yellow .is-focus-word,
+.is-focus-word {
+    background: #FFE066 !important;
+    color: #D9480F !important;
+    border: 1.5px solid #FF922B !important;
+    box-shadow: 0 2px 6px rgba(245, 159, 0, 0.35);
+}
+.theme-yellow .focus-ruby rt,
+.focus-ruby rt {
+    color: #D9480F !important;
+    font-weight: 700;
+}
+
+/* Theme: 樱花粉 (Pink) */
+.theme-pink .is-focus-word {
+    background: #FCC2D7 !important;
+    color: #C2255C !important;
+    border: 1.5px solid #F783AC !important;
+    box-shadow: 0 2px 6px rgba(230, 73, 128, 0.35);
+}
+.theme-pink .focus-ruby rt {
+    color: #C2255C !important;
+    font-weight: 700;
+}
+
+/* Theme: 苹果绿 (Green) */
+.theme-green .is-focus-word {
+    background: #D3F9D8 !important;
+    color: #2B8A3E !important;
+    border: 1.5px solid #8CE99A !important;
+    box-shadow: 0 2px 6px rgba(64, 192, 87, 0.35);
+}
+.theme-green .focus-ruby rt {
+    color: #2B8A3E !important;
+    font-weight: 700;
+}
+
+/* Theme: 晴空蓝 (Blue) */
+.theme-blue .is-focus-word {
+    background: #D0EBFF !important;
+    color: #1864AB !important;
+    border: 1.5px solid #74C0FC !important;
+    box-shadow: 0 2px 6px rgba(51, 154, 240, 0.35);
+}
+.theme-blue .focus-ruby rt {
+    color: #1864AB !important;
+    font-weight: 700;
+}
+
+/* Color dot picker controls */
+.color-picker-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #F8F9FA;
+    padding: 3px 8px;
+    border-radius: 20px;
+    border: 1px solid #CFD8DC;
+}
+
+.color-dot-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #FFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    padding: 0;
+}
+
+.color-dot-btn:hover {
+    transform: scale(1.2);
+}
+
+.color-dot-btn.active {
+    transform: scale(1.25);
+    outline: 2px solid #37474F;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.color-dot-yellow { background: #FFD43B; }
+.color-dot-pink { background: #FF8787; }
+.color-dot-green { background: #69DB7C; }
+.color-dot-blue { background: #4DABF7; }
+
+/* Focus Counter Badge */
+.focus-words-counter-badge {
+    font-size: 0.85rem;
+    color: #D9480F;
+    background: #FFF9DB;
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid #FFE066;
+    font-weight: 700;
 }
 
 .mark-mode-hint-banner {
