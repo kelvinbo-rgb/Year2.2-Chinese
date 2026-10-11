@@ -32,6 +32,51 @@ let currentCharacter = '';
 let currentUtterance = null;
 let voicesList = [];
 
+// Global State for Focus Words & Cloze Testing
+let currentLessonIndex = 0;
+let currentClozeMode = 'normal'; // 'normal' | 'hide-pinyin' | 'hide-hanzi'
+let isMarkingFocusMode = false;
+
+// Sync Modal elements
+const syncModal = document.getElementById('sync-modal');
+const closeSyncModalBtn = document.getElementById('close-sync-modal');
+const btnCloseSync = document.getElementById('btn-close-sync');
+const btnCopySyncLink = document.getElementById('btn-copy-sync-link');
+const syncQrcodeContainer = document.getElementById('sync-qrcode-container');
+const syncSummaryBadge = document.getElementById('sync-summary-badge');
+
+// Story Modal elements
+const storyModal = document.getElementById('story-modal');
+const closeStoryModalBtn = document.getElementById('close-story-modal');
+const btnAiGenStory = document.getElementById('btn-ai-gen-story');
+const btnEditStoryText = document.getElementById('btn-edit-story-text');
+const btnStoryLead = document.getElementById('btn-story-lead');
+const btnStoryStop = document.getElementById('btn-story-stop');
+const storyEditorContainer = document.getElementById('story-editor-container');
+const storyEditorTextarea = document.getElementById('story-editor-textarea');
+const btnCancelEditStory = document.getElementById('btn-cancel-edit-story');
+const btnSaveCustomStory = document.getElementById('btn-save-custom-story');
+const storyFocusWordsChips = document.getElementById('story-focus-words-chips');
+const storyArticleBody = document.getElementById('story-article-body');
+let storyClozeMode = 'normal';
+let currentStoryText = '';
+const storyPlaybackState = {
+    sentences: [],
+    index: 0,
+    isPlaying: false
+};
+
+// Pinyin Quiz Modal elements
+const pinyinQuizModal = document.getElementById('pinyin-quiz-modal');
+const closePinyinQuizBtn = document.getElementById('close-pinyin-quiz');
+const pinyinQuizTargetChar = document.getElementById('pinyin-quiz-target-char');
+const pinyinQuizOptions = document.getElementById('pinyin-quiz-options');
+const btnPinyinQuizReveal = document.getElementById('btn-pinyin-quiz-reveal');
+
+// Selection Popover
+const selectionPopover = document.getElementById('selection-popover');
+let selectedTextToFocus = '';
+
 // Clean voice loader
 function updateVoices() {
     if ('speechSynthesis' in window) {
@@ -119,6 +164,198 @@ function saveCustomLessonText(lessonIndex, text) {
 
 function resetCustomLessonText(lessonIndex) {
     localStorage.removeItem('custom_lesson_text_' + lessonIndex);
+}
+
+// ================= Focus Words & Story Persistence =================
+function getFocusWords(lessonIndex) {
+    try {
+        const raw = localStorage.getItem('focus_words_' + lessonIndex);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+                return parsed.map(w => (w || '').trim()).filter(w => w.length > 0);
+            }
+        }
+    } catch (e) {
+        console.error("Error reading focus words:", e);
+    }
+    return [];
+}
+
+function saveFocusWords(lessonIndex, words) {
+    try {
+        const unique = Array.from(new Set((words || []).map(w => (w || '').trim()).filter(w => w.length > 0)));
+        localStorage.setItem('focus_words_' + lessonIndex, JSON.stringify(unique));
+    } catch (e) {
+        console.error("Error saving focus words:", e);
+    }
+}
+
+function addFocusWord(lessonIndex, word) {
+    const cleanWord = (word || '').trim().replace(/[，。！？!?、；;:：“”‘’（）\s]/g, '');
+    if (!cleanWord) return;
+    const current = getFocusWords(lessonIndex);
+    if (!current.includes(cleanWord)) {
+        current.push(cleanWord);
+        saveFocusWords(lessonIndex, current);
+    }
+}
+
+function removeFocusWord(lessonIndex, word) {
+    const cleanWord = (word || '').trim();
+    const current = getFocusWords(lessonIndex).filter(w => w !== cleanWord);
+    saveFocusWords(lessonIndex, current);
+}
+
+function toggleFocusWord(lessonIndex, word) {
+    const cleanWord = (word || '').trim();
+    if (!cleanWord) return;
+    const current = getFocusWords(lessonIndex);
+    if (current.includes(cleanWord)) {
+        removeFocusWord(lessonIndex, cleanWord);
+    } else {
+        addFocusWord(lessonIndex, cleanWord);
+    }
+}
+
+function getCustomStory(lessonIndex) {
+    return localStorage.getItem('custom_story_' + lessonIndex) || '';
+}
+
+function saveCustomStory(lessonIndex, text) {
+    localStorage.setItem('custom_story_' + lessonIndex, (text || '').trim());
+}
+
+// ================= Offline QR Code Sync Encoding / Decoding =================
+function encodeSyncData(data) {
+    const jsonStr = JSON.stringify(data);
+    const utf8Bytes = new TextEncoder().encode(jsonStr);
+    let binary = '';
+    for (let i = 0; i < utf8Bytes.length; i++) binary += String.fromCharCode(utf8Bytes[i]);
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function decodeSyncData(b64) {
+    let base64 = b64.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) base64 += '=';
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const jsonStr = new TextDecoder().decode(bytes);
+    return JSON.parse(jsonStr);
+}
+
+function checkUrlSync() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const syncParam = params.get('sync');
+        if (!syncParam) return false;
+
+        const data = decodeSyncData(syncParam);
+        if (data && (data.t === 'fs' || data.t === 'focus') && typeof data.l === 'number') {
+            const lessonIdx = data.l;
+            if (Array.isArray(data.w)) {
+                saveFocusWords(lessonIdx, data.w);
+            }
+            if (typeof data.s === 'string' && data.s.trim().length > 0) {
+                saveCustomStory(lessonIdx, data.s);
+            }
+
+            // Remove query param from address bar without page reload
+            const cleanUrl = window.location.origin + window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+
+            const lessonTitle = lessonData[lessonIdx]?.title || `第 ${lessonIdx + 1} 课`;
+            alert(`🎉 恭喜！重点字词库扫码同步成功！\n\n已成功导入【${lessonTitle}】的 ${data.w?.length || 0} 个重点词与专属小故事。\n现在可以开始学习啦！`);
+
+            currentLessonIndex = lessonIdx;
+            renderLessonView(lessonIdx);
+            return true;
+        }
+    } catch (e) {
+        console.error("Sync data parse error:", e);
+    }
+    return false;
+}
+
+// Curated 2nd-grade story templates for lessons
+const LESSON_STORY_TEMPLATES = {
+    0: "春天像一位害羞的小姑娘，迈着轻盈的脚步来到了田野。微风轻轻吹拂，小草悄悄探出头来，树枝上吐出了嫩绿的嫩芽。我们高兴地脱掉厚厚的棉袄，奔向广阔的田野，到处寻找春天的足迹。你看，路边的野花在微风中轻轻点头，阳光温暖地照耀着大家。只要我们用心发现，生活处处都是美好的春天！",
+    1: "早春二月，杨柳吐出嫩绿的丝绦，微风轻轻吹拂着水面。放学回来的孩子们奔跑在碧绿的原野上，高高放起彩色的风筝。温暖的春风像一把神奇的剪刀，把大自然打扮得生机勃勃。",
+    2: "鼹鼠先生去邮局取了一个大包裹。松鼠太太和刺猬太太都好奇地围了过来。一路上，花籽悄悄洒落在泥土里。到了夏天，门前开满了五颜六色绚丽的花朵，大家心里乐开了花，这是一份多么美好的礼物呀！",
+    3: "阳光明媚的天气里，大家手拿铁锹兴高采烈地来到公园里植树。我们在泥土里挖好坑，小心翼翼地把绿色的柏树苗栽进土里。经过辛勤的汗水浇灌，小树苗像战士一样笔直地站立着，为大地增添了一抹生机。",
+    4: "清晨的小路旁挂满了晶莹的露珠。小溪哗哗流淌，大娘和孩子们在溪边漫步。遇到有困难的行人，大家热情地伸出援助之手。无论走到哪里，雷锋叔叔那助人为乐的精神都温暖着每一个人的心灵。",
+    5: "爸爸拿来一块普通的米糕，微风吹拂着田野。你知道吗？为了制作这块糕点，需要农夫辛勤耕种大米，糖农熬制甘甜的糖浆，还需要包装和运输工人的默默奉献。大家团结合作，才有了香甜可口的千人糕！",
+    6: "郊外的小河边绿草如茵，垂柳依依。妹妹走得累了，恋恋不舍地望着远方。爸爸随手拾起一根漂亮的柳树枝，当成一匹出色的神马。妹妹骑着骏马飞快地奔跑回家，欢快的笑声回荡在温馨的小道上。"
+};
+
+function generateDynamicStory(lessonIndex, focusWords) {
+    let base = LESSON_STORY_TEMPLATES[lessonIndex];
+    if (!base) {
+        const lesson = lessonData[lessonIndex] || {};
+        base = `今天阳光灿烂，大家在快乐地学习《${lesson.title || '本课'}》。大自然就像一本生动的画卷，到处充满着惊喜与智慧。只要我们认真观察生活，勤于动笔，每一天都能收获满满的快乐与知识！`;
+    }
+
+    if (focusWords && focusWords.length > 0) {
+        const missing = focusWords.filter(w => !base.includes(w));
+        if (missing.length > 0) {
+            base += `\n小树林里的小动物们也来做客了。大家一起温习了【${missing.join('、')}】这些好词好句，在温暖的微风中开心地朗诵起来！`;
+        }
+    }
+    return base;
+}
+
+// Generate 3 clever distractors for 4-choice pinyin quiz
+function generatePinyinDistractors(char, correctPinyin) {
+    const distractors = new Set();
+    const vowelTones = {
+        'a': ['ā', 'á', 'ǎ', 'à'],
+        'e': ['ē', 'é', 'ě', 'è'],
+        'i': ['ī', 'í', 'ǐ', 'ì'],
+        'o': ['ō', 'ó', 'ǒ', 'ò'],
+        'u': ['ū', 'ú', 'ǔ', 'ù'],
+        'ü': ['ǖ', 'ǘ', 'ǚ', 'ǜ'],
+        'v': ['ǖ', 'ǘ', 'ǚ', 'ǜ']
+    };
+    const allTonedVowels = {
+        'ā': 'a', 'á': 'a', 'ǎ': 'a', 'à': 'a',
+        'ē': 'e', 'é': 'e', 'ě': 'e', 'è': 'e',
+        'ī': 'i', 'í': 'i', 'ǐ': 'i', 'ì': 'i',
+        'ō': 'o', 'ó': 'o', 'ǒ': 'o', 'ò': 'o',
+        'ū': 'u', 'ú': 'u', 'ǔ': 'u', 'ù': 'u',
+        'ǖ': 'ü', 'ǘ': 'ü', 'ǚ': 'ü', 'ǜ': 'ü'
+    };
+
+    // 1. Substitute tones of the toned vowel
+    for (const [tonedV, baseV] of Object.entries(allTonedVowels)) {
+        if (correctPinyin && correctPinyin.includes(tonedV)) {
+            const family = vowelTones[baseV];
+            if (family) {
+                family.forEach(v => {
+                    const variant = correctPinyin.replace(tonedV, v);
+                    if (variant !== correctPinyin) {
+                        distractors.add(variant);
+                    }
+                });
+            }
+        }
+    }
+
+    // 2. Fallback to other characters' pinyins if needed
+    if (distractors.size < 3) {
+        const pool = (lessonData[currentLessonIndex]?.chars || "春风柳叶花草天地人").split('');
+        for (const c of pool) {
+            if (c !== char && window.pinyinPro) {
+                const py = window.pinyinPro.pinyin(c);
+                if (py && py !== correctPinyin) distractors.add(py);
+                if (distractors.size >= 3) break;
+            }
+        }
+    }
+
+    const picked = Array.from(distractors).slice(0, 3);
+    const options = [correctPinyin, ...picked].sort(() => Math.random() - 0.5);
+    return options;
 }
 
 // ================= Speech Engine (Zero API / Free) =================
@@ -401,9 +638,62 @@ function renderLessonList() {
     });
 }
 
+// ================= Focus Words Bank Rendering =================
+function renderFocusWordsBank(lessonIndex) {
+    const container = document.getElementById('focus-words-chips-container');
+    const countEl = document.getElementById('focus-words-count');
+    if (!container) return;
+
+    const words = getFocusWords(lessonIndex);
+    if (countEl) countEl.textContent = words.length;
+    container.innerHTML = '';
+
+    if (words.length === 0) {
+        container.innerHTML = `
+            <span style="font-size:0.85rem; color:#90A4AE; font-style:italic;">
+                暂无重点词。可点击上方【✏️ 圈选生字词】直接点选课文，或点击
+            </span>
+            <button id="btn-quick-import-chars" class="action-btn-small" style="padding:0.25rem 0.65rem; font-size:0.82rem; background:#E0F2F1; color:#00796B; border:1px solid #80CBC4; border-radius:14px; cursor:pointer; font-weight:600;">
+                ⚡ 一键导入本课写字表
+            </button>
+        `;
+        const importBtn = document.getElementById('btn-quick-import-chars');
+        if (importBtn) {
+            importBtn.addEventListener('click', () => {
+                const chars = (lessonData[lessonIndex].chars || '').split('');
+                chars.forEach(c => {
+                    if (c) addFocusWord(lessonIndex, c);
+                });
+                renderLessonView(lessonIndex);
+            });
+        }
+        return;
+    }
+
+    words.forEach(word => {
+        const chip = document.createElement('span');
+        chip.className = 'focus-word-chip';
+        chip.innerHTML = `
+            <span>${word}</span>
+            <span class="chip-del-btn" title="移出重点词" data-word="${word}">&times;</span>
+        `;
+        chip.addEventListener('click', (e) => {
+            if (e.target.classList.contains('chip-del-btn')) {
+                e.stopPropagation();
+                removeFocusWord(lessonIndex, word);
+                renderLessonView(lessonIndex);
+            } else {
+                speakChinese(word, 0.75);
+            }
+        });
+        container.appendChild(chip);
+    });
+}
+
 // ================= Lesson Detail View =================
 function renderLessonView(lessonIndex) {
     stopPlayback();
+    currentLessonIndex = lessonIndex;
     const lesson = lessonData[lessonIndex];
     const text = getLessonText(lessonIndex);
 
@@ -475,12 +765,58 @@ function renderLessonView(lessonIndex) {
             </div>
         </div>
 
+        <!-- Focus Toolbar & Cloze Mode Switcher -->
+        <div class="focus-control-bar">
+            <div class="focus-control-group">
+                <span style="font-size:0.88rem; font-weight:700; color:#37474F;">自测挖空模式：</span>
+                <div class="cloze-switcher" id="main-cloze-switcher">
+                    <button class="cloze-btn ${currentClozeMode === 'normal' ? 'active' : ''}" data-mode="normal" title="正常阅读，标亮重点词">📖 完整认读</button>
+                    <button class="cloze-btn ${currentClozeMode === 'hide-pinyin' ? 'active' : ''}" data-mode="hide-pinyin" title="重点词隐藏拼音，考查读音">🔤 隐拼音·考读音</button>
+                    <button class="cloze-btn ${currentClozeMode === 'hide-hanzi' ? 'active' : ''}" data-mode="hide-hanzi" title="重点词隐藏汉字，考查默写">✍️ 隐汉字·考默写</button>
+                </div>
+            </div>
+            <div class="focus-control-group">
+                <button class="btn-toggle-mark ${isMarkingFocusMode ? 'active' : ''}" id="btn-toggle-mark-mode">
+                    ${isMarkingFocusMode ? '🎯 圈选模式开启中 (点击字词)' : '✏️ 圈选生字词'}
+                </button>
+                <button class="action-btn-small" id="btn-open-story" style="background:#E0F2F1; color:#00796B; border:1px solid #80CBC4; font-weight:700;">
+                    ✨ 串词小故事
+                </button>
+                <button class="action-btn-small" id="btn-open-sync" style="background:#FFF3E0; color:#E65100; border:1px solid #FFCC80; font-weight:700;">
+                    📲 同步给孩子
+                </button>
+            </div>
+        </div>
+
+        <!-- Focus Words Bank Card -->
+        <div class="focus-words-bank-card" id="focus-words-bank-card">
+            <div class="focus-words-header">
+                <div class="focus-words-title">
+                    <span>⭐ 本课重点字词库</span>
+                    <span style="font-size:0.85rem; color:var(--gray); font-family:'Noto Sans SC';">
+                        (已标记 <b id="focus-words-count">0</b> 个词，在挖空自测与小故事中重点考察)
+                    </span>
+                </div>
+                <div class="focus-add-inline">
+                    <input type="text" id="input-add-focus-word" class="focus-add-input" placeholder="输入生字或词语" maxlength="10">
+                    <button id="btn-add-focus-input" class="btn-add-focus-word">➕添加</button>
+                </div>
+            </div>
+            <div class="focus-words-chips-container" id="focus-words-chips-container"></div>
+        </div>
+
+        ${isMarkingFocusMode ? `
+        <div class="mark-mode-hint-banner" id="mark-mode-hint-banner">
+            <span>💡 <b>圈选模式开启中</b>：直接点击课文中的任意单字，或用鼠标/手指划选词语加入重点！点击右侧按钮可退出圈选。</span>
+            <button class="action-btn-small" id="btn-close-mark-mode" style="padding:0.25rem 0.6rem; font-size:0.8rem; background:#FFE0B2; border-color:#FFB74D; color:#E65100; font-weight:700;">完成圈选</button>
+        </div>` : ''}
+
         <!-- Pinyin Article Display -->
         <div class="article-container">
             <div class="article-title-block">
                 <h2>${lesson.title}</h2>
             </div>
-            <div class="article-pinyin-body" id="article-body">
+            <div class="article-pinyin-body ${isMarkingFocusMode ? 'marking-active' : ''}" id="article-body">
                 <!-- Injected Pinyin HTML -->
             </div>
         </div>
@@ -495,8 +831,14 @@ function renderLessonView(lessonIndex) {
         </div>
     `;
 
-    // Render Article with Ruby Pinyin
-    renderArticleBody(document.getElementById('article-body'), text);
+    // Render Focus Words Bank Chips
+    renderFocusWordsBank(lessonIndex);
+
+    // Render Article with Ruby Pinyin & Focus Highlights
+    renderArticleBody(document.getElementById('article-body'), text, {
+        lessonIndex: lessonIndex,
+        clozeMode: currentClozeMode
+    });
 
     // Render Lesson Chars Grid
     const charGrid = document.getElementById('char-grid');
@@ -520,6 +862,60 @@ function renderLessonView(lessonIndex) {
     document.getElementById('start-lesson-quiz').addEventListener('click', () => {
         stopPlayback();
         startQuiz(lesson.chars, lessonIndex);
+    });
+
+    // Cloze Switcher buttons
+    document.querySelectorAll('#main-cloze-switcher .cloze-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentClozeMode = btn.dataset.mode;
+            document.querySelectorAll('#main-cloze-switcher .cloze-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderArticleBody(document.getElementById('article-body'), text, {
+                lessonIndex: lessonIndex,
+                clozeMode: currentClozeMode
+            });
+        });
+    });
+
+    // Toggle Mark Mode button
+    document.getElementById('btn-toggle-mark-mode').addEventListener('click', () => {
+        isMarkingFocusMode = !isMarkingFocusMode;
+        renderLessonView(lessonIndex);
+    });
+
+    const closeMarkBtn = document.getElementById('btn-close-mark-mode');
+    if (closeMarkBtn) {
+        closeMarkBtn.addEventListener('click', () => {
+            isMarkingFocusMode = false;
+            renderLessonView(lessonIndex);
+        });
+    }
+
+    // Add Focus Word from Input
+    const addInput = document.getElementById('input-add-focus-word');
+    const addBtn = document.getElementById('btn-add-focus-input');
+    const handleAddWord = () => {
+        const val = addInput.value.trim();
+        if (val) {
+            addFocusWord(lessonIndex, val);
+            addInput.value = '';
+            renderLessonView(lessonIndex);
+        }
+    };
+    if (addBtn) addBtn.addEventListener('click', handleAddWord);
+    if (addInput) {
+        addInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleAddWord();
+        });
+    }
+
+    // Open Story & Sync Modals
+    document.getElementById('btn-open-story').addEventListener('click', () => {
+        openStoryModal(lessonIndex);
+    });
+
+    document.getElementById('btn-open-sync').addEventListener('click', () => {
+        openSyncModal(lessonIndex);
     });
 
     // Edit text button
@@ -595,11 +991,16 @@ function extractSentences(text) {
     return sentences;
 }
 
-function renderArticleBody(container, text) {
+function renderArticleBody(container, text, options = {}) {
+    if (!container) return;
     if (!text) {
         container.innerHTML = '<p>暂无课文内容</p>';
         return;
     }
+
+    const lessonIndex = options.lessonIndex !== undefined ? options.lessonIndex : currentLessonIndex;
+    const clozeMode = options.clozeMode || currentClozeMode || 'normal';
+    const focusWords = options.focusWords || getFocusWords(lessonIndex);
 
     container.innerHTML = '';
     const paragraphs = text.split('\n');
@@ -623,20 +1024,51 @@ function renderArticleBody(container, text) {
             sentSpan.title = "点击从此句开始朗读";
 
             // Generate characters with Ruby & prepend a play badge
-            sentSpan.innerHTML = `<span class="sentence-play-tag" title="从此句开始朗读">▶</span>` + generateRubyHtmlForSentence(sent.trim());
+            sentSpan.innerHTML = `<span class="sentence-play-tag" title="从此句开始朗读">▶</span>` +
+                generateRubyHtmlForSentence(sent.trim(), focusWords, clozeMode);
 
-            // Add click-to-read and inspect character
-            sentSpan.querySelectorAll('.py-char-span').forEach(charSpan => {
-                const char = charSpan.dataset.char;
-                charSpan.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Don't trigger sentence playback!
-                    speakChinese(char, 0.75);
-                    openModal(char);
+            // 1. Interaction for Masked Pinyin Bubble in 'hide-pinyin' mode
+            sentSpan.querySelectorAll('.masked-pinyin-bubble').forEach(rt => {
+                rt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const char = rt.dataset.char;
+                    const py = rt.dataset.pinyin;
+                    openPinyinQuizModal(char, py, () => {
+                        rt.textContent = py;
+                        rt.classList.add('revealed');
+                    });
                 });
             });
 
-            // Click sentence (or play tag): Start reading from this sentence onwards!
+            // 2. Interaction for Masked Hanzi Box in 'hide-hanzi' mode
+            sentSpan.querySelectorAll('.masked-hanzi-box').forEach(box => {
+                box.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const char = box.dataset.char;
+                    openModal(char, true); // true = auto quiz mode
+                });
+            });
+
+            // 3. Interaction for Normal Characters
+            sentSpan.querySelectorAll('.py-char-span:not(.masked-hanzi-box)').forEach(charSpan => {
+                const char = charSpan.dataset.char;
+                charSpan.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (isMarkingFocusMode) {
+                        // In marking mode: clicking a character toggles it in focus words
+                        toggleFocusWord(lessonIndex, char);
+                        renderLessonView(lessonIndex);
+                    } else {
+                        // Normal mode: speak and open stroke decomposition
+                        speakChinese(char, 0.75);
+                        openModal(char, false);
+                    }
+                });
+            });
+
+            // 4. Click sentence (or play tag): Start reading from this sentence onwards!
             sentSpan.addEventListener('click', () => {
+                if (isMarkingFocusMode) return;
                 currentPlaybackState.isPlaying = true;
                 currentPlaybackState.sentenceIndex = sentIndex;
                 playCurrentSentence();
@@ -649,17 +1081,62 @@ function renderArticleBody(container, text) {
     });
 }
 
-function generateRubyHtmlForSentence(sentence) {
-    let html = '';
-    for (let i = 0; i < sentence.length; i++) {
-        const char = sentence[i];
-        if (/[\u4e00-\u9fa5]/.test(char)) {
-            const py = window.pinyinPro ? window.pinyinPro.pinyin(char) : '';
-            html += `<ruby><span class="py-char-span" data-char="${char}">${char}</span><rt>${py}</rt></ruby>`;
+function generateRubyHtmlForSentence(sentence, focusWords = [], clozeMode = 'normal') {
+    // Filter non-empty words and sort descending by length to match longest phrase first
+    const sortedWords = (focusWords || [])
+        .map(w => (w || '').trim())
+        .filter(w => w.length > 0)
+        .sort((a, b) => b.length - a.length);
+
+    // Segment sentence
+    const segments = [];
+    let i = 0;
+    while (i < sentence.length) {
+        let matched = null;
+        for (const w of sortedWords) {
+            if (sentence.startsWith(w, i)) {
+                matched = w;
+                break;
+            }
+        }
+        if (matched) {
+            segments.push({ text: matched, isFocus: true });
+            i += matched.length;
         } else {
-            html += `<span class="punct-span">${char}</span>`;
+            segments.push({ text: sentence[i], isFocus: false });
+            i++;
         }
     }
+
+    let html = '';
+    segments.forEach(seg => {
+        if (seg.isFocus) {
+            for (let c = 0; c < seg.text.length; c++) {
+                const char = seg.text[c];
+                if (/[\u4e00-\u9fa5]/.test(char)) {
+                    const py = window.pinyinPro ? window.pinyinPro.pinyin(char) : '';
+                    if (clozeMode === 'hide-pinyin') {
+                        html += `<ruby class="focus-ruby"><span class="py-char-span is-focus-word" data-char="${char}">${char}</span><rt class="masked-pinyin-bubble" data-char="${char}" data-pinyin="${py}" data-word="${seg.text}" title="点击答题或揭晓读音">?</rt></ruby>`;
+                    } else if (clozeMode === 'hide-hanzi') {
+                        html += `<ruby class="focus-ruby"><span class="py-char-span masked-hanzi-box" data-char="${char}" data-pinyin="${py}" data-word="${seg.text}" title="点击手写或揭晓汉字">🔲</span><rt class="revealed-pinyin">${py}</rt></ruby>`;
+                    } else {
+                        html += `<ruby class="focus-ruby"><span class="py-char-span is-focus-word" data-char="${char}" data-word="${seg.text}" title="重点字词">${char}</span><rt>${py}</rt></ruby>`;
+                    }
+                } else {
+                    html += `<span class="punct-span">${char}</span>`;
+                }
+            }
+        } else {
+            const char = seg.text;
+            if (/[\u4e00-\u9fa5]/.test(char)) {
+                const py = window.pinyinPro ? window.pinyinPro.pinyin(char) : '';
+                html += `<ruby><span class="py-char-span" data-char="${char}">${char}</span><rt>${py}</rt></ruby>`;
+            } else {
+                html += `<span class="punct-span">${char}</span>`;
+            }
+        }
+    });
+
     return html;
 }
 
@@ -1029,7 +1506,7 @@ function renderCustomPracticeView() {
 }
 
 // ================= Character & Phonics & Stroke Order Modal (Compact, No Scrollbar) =================
-function openModal(char) {
+function openModal(char, autoQuiz = false) {
     currentCharacter = char;
     modal.classList.remove('hidden');
 
@@ -1115,7 +1592,21 @@ function openModal(char) {
                         });
                 }
             });
-            writer.animateCharacter();
+
+            if (autoQuiz) {
+                // Interactive quiz writing mode for cloze practice
+                writer.quiz({
+                    onComplete: (summary) => {
+                        speakChinese("写得太棒啦！", 0.9);
+                        document.querySelectorAll(`.masked-hanzi-box[data-char="${char}"]`).forEach(box => {
+                            box.textContent = char;
+                            box.classList.add('revealed');
+                        });
+                    }
+                });
+            } else {
+                writer.animateCharacter();
+            }
         } catch (e) {
             console.error("HanziWriter initialization error:", e);
         }
@@ -1137,6 +1628,12 @@ if (closeCharModalBtn) closeCharModalBtn.addEventListener('click', closeModal);
 window.addEventListener('click', (e) => {
     if (e.target === modal) closeModal();
     if (e.target === editTextModal) editTextModal.classList.add('hidden');
+    if (e.target === syncModal) syncModal.classList.add('hidden');
+    if (e.target === storyModal) {
+        stopStoryPlayback();
+        storyModal.classList.add('hidden');
+    }
+    if (e.target === pinyinQuizModal) pinyinQuizModal.classList.add('hidden');
 });
 
 btnAnimate.addEventListener('click', () => {
@@ -1322,5 +1819,346 @@ function renderQuizQuestion(char, correctPinyin, options, scopeChars, returnInde
     nextBtn.addEventListener('click', () => startQuiz(scopeChars, returnIndex));
 }
 
-// ================= Initial Load =================
-renderLessonList();
+// ================= Pinyin 4-Choice Quiz Modal Logic =================
+function openPinyinQuizModal(char, correctPinyin, onRevealed) {
+    if (!pinyinQuizModal) return;
+    pinyinQuizTargetChar.textContent = char;
+    pinyinQuizModal.classList.remove('hidden');
+
+    const options = generatePinyinDistractors(char, correctPinyin);
+    pinyinQuizOptions.innerHTML = options.map(opt => `
+        <button class="pinyin-quiz-opt" data-val="${opt}">${opt}</button>
+    `).join('');
+
+    const optBtns = pinyinQuizOptions.querySelectorAll('.pinyin-quiz-opt');
+    optBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            optBtns.forEach(b => b.disabled = true);
+            const val = btn.dataset.val;
+            if (val === correctPinyin) {
+                btn.classList.add('correct');
+                speakChinese("答对了，真棒！" + char + "，" + correctPinyin, 0.85);
+                if (onRevealed) onRevealed();
+                setTimeout(() => {
+                    pinyinQuizModal.classList.add('hidden');
+                }, 1100);
+            } else {
+                btn.classList.add('wrong');
+                optBtns.forEach(b => {
+                    if (b.dataset.val === correctPinyin) b.classList.add('correct');
+                });
+                speakChinese("再想想哦，这个字读 " + correctPinyin, 0.85);
+                if (onRevealed) onRevealed();
+                setTimeout(() => {
+                    pinyinQuizModal.classList.add('hidden');
+                }, 1600);
+            }
+        });
+    });
+
+    if (btnPinyinQuizReveal) {
+        btnPinyinQuizReveal.onclick = () => {
+            optBtns.forEach(b => {
+                b.disabled = true;
+                if (b.dataset.val === correctPinyin) b.classList.add('correct');
+            });
+            speakChinese(char + "，读作 " + correctPinyin, 0.8);
+            if (onRevealed) onRevealed();
+            setTimeout(() => {
+                pinyinQuizModal.classList.add('hidden');
+            }, 1200);
+        };
+    }
+}
+
+if (closePinyinQuizBtn) {
+    closePinyinQuizBtn.onclick = () => pinyinQuizModal.classList.add('hidden');
+}
+
+// ================= Focus Words Mini Story Modal Logic =================
+function openStoryModal(lessonIndex) {
+    if (!storyModal) return;
+    storyModal.classList.remove('hidden');
+    stopPlayback();
+    stopStoryPlayback();
+
+    const words = getFocusWords(lessonIndex);
+    if (storyFocusWordsChips) {
+        storyFocusWordsChips.innerHTML = words.length > 0 ?
+            words.map(w => `<span class="focus-word-chip" style="font-size:0.85rem; padding:0.2rem 0.5rem;">${w}</span>`).join(' ') :
+            '<span style="color:#90A4AE; font-size:0.85rem;">(本课暂未圈选生词，可点击【自由创编】直接撰写小故事)</span>';
+    }
+
+    currentStoryText = getCustomStory(lessonIndex);
+    if (!currentStoryText) {
+        currentStoryText = generateDynamicStory(lessonIndex, words);
+    }
+
+    storyClozeMode = 'normal';
+    updateStoryClozeButtons();
+    renderStoryContent(lessonIndex);
+}
+
+function updateStoryClozeButtons() {
+    ['normal', 'hide-pinyin', 'hide-hanzi'].forEach(mode => {
+        const btn = document.getElementById(`story-mode-${mode}`);
+        if (btn) {
+            btn.classList.toggle('active', storyClozeMode === mode);
+        }
+    });
+}
+
+function renderStoryContent(lessonIndex) {
+    if (!storyArticleBody) return;
+    const words = getFocusWords(lessonIndex);
+
+    renderArticleBody(storyArticleBody, currentStoryText, {
+        lessonIndex: lessonIndex,
+        clozeMode: storyClozeMode,
+        focusWords: words
+    });
+}
+
+function startStoryLead() {
+    stopStoryPlayback();
+    const sentences = extractSentences(currentStoryText);
+    if (sentences.length === 0) return;
+
+    storyPlaybackState.sentences = sentences;
+    storyPlaybackState.index = 0;
+    storyPlaybackState.isPlaying = true;
+
+    playNextStorySentence();
+}
+
+function playNextStorySentence() {
+    if (!storyPlaybackState.isPlaying) return;
+    if (storyPlaybackState.index >= storyPlaybackState.sentences.length) {
+        stopStoryPlayback();
+        speakChinese("小故事读完啦，真棒！", 0.9);
+        return;
+    }
+
+    const idx = storyPlaybackState.index;
+    const sent = storyPlaybackState.sentences[idx];
+
+    // Highlight sentence in story
+    if (storyArticleBody) {
+        storyArticleBody.querySelectorAll('.article-sentence').forEach(el => {
+            el.classList.toggle('active-sentence', parseInt(el.dataset.sentenceIndex) === idx);
+        });
+    }
+
+    speakChinese(sent, 0.8, () => {
+        if (!storyPlaybackState.isPlaying) return;
+        setTimeout(() => {
+            storyPlaybackState.index++;
+            playNextStorySentence();
+        }, 500);
+    });
+}
+
+function stopStoryPlayback() {
+    storyPlaybackState.isPlaying = false;
+    storyPlaybackState.index = 0;
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    if (storyArticleBody) {
+        storyArticleBody.querySelectorAll('.article-sentence.active-sentence').forEach(el => {
+            el.classList.remove('active-sentence');
+        });
+    }
+}
+
+// Story Cloze mode buttons
+['normal', 'hide-pinyin', 'hide-hanzi'].forEach(mode => {
+    const btn = document.getElementById(`story-mode-${mode}`);
+    if (btn) {
+        btn.onclick = () => {
+            storyClozeMode = mode;
+            updateStoryClozeButtons();
+            renderStoryContent(currentLessonIndex);
+        };
+    }
+});
+
+if (btnStoryLead) btnStoryLead.onclick = startStoryLead;
+if (btnStoryStop) btnStoryStop.onclick = stopStoryPlayback;
+
+if (btnAiGenStory) {
+    btnAiGenStory.onclick = () => {
+        const words = getFocusWords(currentLessonIndex);
+        currentStoryText = generateDynamicStory(currentLessonIndex, words);
+        saveCustomStory(currentLessonIndex, currentStoryText);
+        if (storyEditorContainer) storyEditorContainer.style.display = 'none';
+        renderStoryContent(currentLessonIndex);
+    };
+}
+
+if (btnEditStoryText) {
+    btnEditStoryText.onclick = () => {
+        if (storyEditorContainer) {
+            storyEditorContainer.style.display = 'block';
+            storyEditorTextarea.value = currentStoryText;
+            storyEditorTextarea.focus();
+        }
+    };
+}
+
+if (btnCancelEditStory) {
+    btnCancelEditStory.onclick = () => {
+        if (storyEditorContainer) storyEditorContainer.style.display = 'none';
+    };
+}
+
+if (btnSaveCustomStory) {
+    btnSaveCustomStory.onclick = () => {
+        const updated = (storyEditorTextarea.value || '').trim();
+        if (updated) {
+            currentStoryText = updated;
+            saveCustomStory(currentLessonIndex, updated);
+            if (storyEditorContainer) storyEditorContainer.style.display = 'none';
+            renderStoryContent(currentLessonIndex);
+        }
+    };
+}
+
+if (closeStoryModalBtn) {
+    closeStoryModalBtn.onclick = () => {
+        stopStoryPlayback();
+        storyModal.classList.add('hidden');
+    };
+}
+
+// ================= QR Code Sync Modal Logic =================
+function openSyncModal(lessonIndex) {
+    if (!syncModal) return;
+    syncModal.classList.remove('hidden');
+
+    const words = getFocusWords(lessonIndex);
+    const story = getCustomStory(lessonIndex);
+    const lesson = lessonData[lessonIndex];
+
+    const payload = {
+        t: 'fs',
+        v: 1,
+        l: lessonIndex,
+        w: words,
+        s: story
+    };
+
+    const b64 = encodeSyncData(payload);
+    const syncUrl = `${window.location.origin}${window.location.pathname}?sync=${b64}`;
+
+    if (syncQrcodeContainer) {
+        syncQrcodeContainer.innerHTML = '';
+        if (window.QRCode) {
+            new QRCode(syncQrcodeContainer, {
+                text: syncUrl,
+                width: 200,
+                height: 200,
+                colorDark: "#263238",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
+    }
+
+    if (syncSummaryBadge) {
+        syncSummaryBadge.textContent = `第 ${lessonIndex + 1} 课《${lesson.title}》· 已选 ${words.length} 个重点词`;
+    }
+
+    if (btnCopySyncLink) {
+        btnCopySyncLink.onclick = () => {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(syncUrl).then(() => {
+                    btnCopySyncLink.textContent = "✅ 已复制同步链接！";
+                    setTimeout(() => { btnCopySyncLink.textContent = "📋 复制同步链接"; }, 2000);
+                }).catch(() => fallbackCopy(syncUrl));
+            } else {
+                fallbackCopy(syncUrl);
+            }
+        };
+    }
+}
+
+function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+        document.execCommand('copy');
+        if (btnCopySyncLink) {
+            btnCopySyncLink.textContent = "✅ 已复制同步链接！";
+            setTimeout(() => { btnCopySyncLink.textContent = "📋 复制同步链接"; }, 2000);
+        }
+    } catch(e) {
+        alert("请手动复制链接：\n" + text);
+    }
+    document.body.removeChild(ta);
+}
+
+if (closeSyncModalBtn) closeSyncModalBtn.onclick = () => syncModal.classList.add('hidden');
+if (btnCloseSync) btnCloseSync.onclick = () => syncModal.classList.add('hidden');
+
+// ================= Floating Text Selection Handler (划选词语加入重点) =================
+function setupTextSelectionHandler() {
+    function handleSelection() {
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+            if (selectionPopover) selectionPopover.style.display = 'none';
+            return;
+        }
+
+        const selectedStr = sel.toString().trim();
+        // Only trigger if text contains at least one Chinese character and <= 8 chars
+        if (!/[\u4e00-\u9fa5]/.test(selectedStr) || selectedStr.length > 8) {
+            if (selectionPopover) selectionPopover.style.display = 'none';
+            return;
+        }
+
+        const range = sel.getRangeAt(0);
+        const articleBody = document.getElementById('article-body');
+        if (!articleBody || !articleBody.contains(range.commonAncestorContainer)) {
+            if (selectionPopover) selectionPopover.style.display = 'none';
+            return;
+        }
+
+        selectedTextToFocus = selectedStr;
+        const rect = range.getBoundingClientRect();
+        if (selectionPopover) {
+            selectionPopover.innerHTML = `➕ 加入重点: <b>${selectedStr}</b>`;
+            selectionPopover.style.display = 'flex';
+            selectionPopover.style.left = `${Math.max(10, rect.left + window.scrollX + (rect.width / 2) - 60)}px`;
+            selectionPopover.style.top = `${rect.top + window.scrollY - 38}px`;
+        }
+    }
+
+    document.addEventListener('selectionchange', handleSelection);
+    document.addEventListener('mouseup', handleSelection);
+    document.addEventListener('touchend', () => setTimeout(handleSelection, 120));
+
+    if (selectionPopover) {
+        selectionPopover.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // prevent clearing selection
+        });
+        selectionPopover.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (selectedTextToFocus && currentLessonIndex >= 0) {
+                addFocusWord(currentLessonIndex, selectedTextToFocus);
+                window.getSelection()?.removeAllRanges();
+                selectionPopover.style.display = 'none';
+                renderLessonView(currentLessonIndex);
+            }
+        });
+    }
+}
+
+// ================= Initial Load & URL Sync Check =================
+setupTextSelectionHandler();
+const hasSynced = checkUrlSync();
+if (!hasSynced) {
+    renderLessonList();
+}
