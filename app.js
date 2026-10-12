@@ -257,8 +257,14 @@ function checkUrlSync() {
             if (Array.isArray(data.w)) {
                 saveFocusWords(lessonIdx, data.w);
             }
+            if (data.st) currentStoryType = data.st;
+            if (typeof data.sd === 'number') storyVariantSeed = data.sd;
+
             if (typeof data.s === 'string' && data.s.trim().length > 0) {
                 saveCustomStory(lessonIdx, data.s);
+            } else {
+                const story = generateDynamicStory(lessonIdx, data.w || [], currentStoryType, storyVariantSeed);
+                saveCustomStory(lessonIdx, story);
             }
 
             // Remove query param from address bar without page reload
@@ -2215,38 +2221,37 @@ function openSyncModal(lessonIndex) {
     syncModal.classList.remove('hidden');
 
     const words = getFocusWords(lessonIndex);
-    const story = getCustomStory(lessonIndex);
     const lesson = lessonData[lessonIndex];
+
+    // Always update summary badge immediately so user sees what is being synced
+    if (syncSummaryBadge) {
+        const title = lesson ? lesson.title : `第 ${lessonIndex + 1} 课`;
+        syncSummaryBadge.textContent = `第 ${lessonIndex + 1} 课《${title}》· 已选 ${words.length} 个重点词`;
+    }
+
+    // Determine payload: keep it lightweight so QR code is crisp and instant to scan
+    const customStory = getCustomStory(lessonIndex);
+    const generatedStory = generateDynamicStory(lessonIndex, words, currentStoryType, storyVariantSeed);
+    const isCustomEdited = customStory && customStory.trim().length > 0 && customStory.trim() !== generatedStory.trim();
 
     const payload = {
         t: 'fs',
-        v: 1,
+        v: 2,
         l: lessonIndex,
         w: words,
-        s: story
+        st: currentStoryType,
+        sd: storyVariantSeed
     };
+
+    // Only include custom story if manually edited by parent and short enough for QR code
+    if (isCustomEdited && customStory.length < 240) {
+        payload.s = customStory;
+    }
 
     const b64 = encodeSyncData(payload);
     const syncUrl = `${window.location.origin}${window.location.pathname}?sync=${b64}`;
 
-    if (syncQrcodeContainer) {
-        syncQrcodeContainer.innerHTML = '';
-        if (window.QRCode) {
-            new QRCode(syncQrcodeContainer, {
-                text: syncUrl,
-                width: 200,
-                height: 200,
-                colorDark: "#263238",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.M
-            });
-        }
-    }
-
-    if (syncSummaryBadge) {
-        syncSummaryBadge.textContent = `第 ${lessonIndex + 1} 课《${lesson.title}》· 已选 ${words.length} 个重点词`;
-    }
-
+    // Always bind copy link button immediately
     if (btnCopySyncLink) {
         btnCopySyncLink.onclick = () => {
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -2258,6 +2263,39 @@ function openSyncModal(lessonIndex) {
                 fallbackCopy(syncUrl);
             }
         };
+    }
+
+    // Render QR Code with error safety
+    if (syncQrcodeContainer) {
+        syncQrcodeContainer.innerHTML = '';
+        try {
+            if (window.QRCode) {
+                new QRCode(syncQrcodeContainer, {
+                    text: syncUrl,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#263238",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.L,
+                    useSVG: true
+                });
+            } else {
+                syncQrcodeContainer.innerHTML = `
+                    <div style="padding:1.2rem; color:#00796B; font-size:0.88rem; line-height:1.6; text-align:center;">
+                        ⏳ 二维码组件加载中...<br><br>
+                        👉 您也可以直接点击下方<b>【📋 复制同步链接】</b>发送给孩子！
+                    </div>
+                `;
+            }
+        } catch (err) {
+            console.error("QRCode render error:", err);
+            syncQrcodeContainer.innerHTML = `
+                <div style="padding:1.2rem; color:#E65100; font-size:0.88rem; line-height:1.6; text-align:center;">
+                    ⚠️ 生词数据较长，已为您生成同步链接。<br><br>
+                    👉 请点击下方<b>【📋 复制同步链接】</b>直接发送给孩子（微信/QQ/剪贴板），打开即自动同步！
+                </div>
+            `;
+        }
     }
 }
 
