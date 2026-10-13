@@ -656,6 +656,32 @@ rt {
     font-weight: 700;
 }
 
+.char-card.is-prev-focus-card {
+    border: 1.5px dashed #B39DDB !important;
+    background-color: #F8F5FC !important;
+    position: relative;
+}
+
+.prev-focus-card-badge {
+    position: absolute;
+    top: -9px;
+    right: -6px;
+    background: #7E57C2;
+    color: #FFF;
+    font-size: 0.62rem;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(126, 87, 194, 0.3);
+    letter-spacing: 0.5px;
+    user-select: none;
+    z-index: 2;
+}
+
+.char-card.is-prev-focus-card .char-card-char {
+    color: #5E35B1 !important;
+}
+
 .char-card-char {
     font-size: 2.8rem;
     font-family: 'KaiTi', '楷体', serif;
@@ -1483,58 +1509,87 @@ rt {
     display: inline-block;
     padding: 0 4px;
     border-radius: 6px;
-    font-weight: 700 !important;
     transition: all 0.2s ease;
 }
 
-/* Default Theme: 阳光黄 (Yellow/Amber) */
-.theme-yellow .is-focus-word,
-.is-focus-word {
+/* 🌟 1. 今日新圈选重点 (Today's New Focus - Bright, Glowing, High Contrast) */
+.is-today-focus-word {
+    font-weight: 800 !important;
+    position: relative;
+}
+
+/* Theme: 阳光黄 (Yellow/Amber - Default) */
+.theme-yellow .is-today-focus-word,
+.is-today-focus-word {
     background: #FFE066 !important;
     color: #D9480F !important;
-    border: 1.5px solid #FF922B !important;
-    box-shadow: 0 2px 6px rgba(245, 159, 0, 0.35);
+    border: 2px solid #FF922B !important;
+    box-shadow: 0 2px 8px rgba(255, 146, 43, 0.45);
 }
-.theme-yellow .focus-ruby rt,
-.focus-ruby rt {
+.theme-yellow .today-focus-ruby rt,
+.today-focus-ruby rt {
     color: #D9480F !important;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 /* Theme: 樱花粉 (Pink) */
-.theme-pink .is-focus-word {
+.theme-pink .is-today-focus-word {
     background: #FCC2D7 !important;
     color: #C2255C !important;
-    border: 1.5px solid #F783AC !important;
-    box-shadow: 0 2px 6px rgba(230, 73, 128, 0.35);
+    border: 2px solid #F783AC !important;
+    box-shadow: 0 2px 8px rgba(230, 73, 128, 0.45);
 }
-.theme-pink .focus-ruby rt {
+.theme-pink .today-focus-ruby rt {
     color: #C2255C !important;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 /* Theme: 苹果绿 (Green) */
-.theme-green .is-focus-word {
+.theme-green .is-today-focus-word {
     background: #D3F9D8 !important;
     color: #2B8A3E !important;
-    border: 1.5px solid #8CE99A !important;
-    box-shadow: 0 2px 6px rgba(64, 192, 87, 0.35);
+    border: 2px solid #51CF66 !important;
+    box-shadow: 0 2px 8px rgba(64, 192, 87, 0.45);
 }
-.theme-green .focus-ruby rt {
+.theme-green .today-focus-ruby rt {
     color: #2B8A3E !important;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 /* Theme: 晴空蓝 (Blue) */
-.theme-blue .is-focus-word {
+.theme-blue .is-today-focus-word {
     background: #D0EBFF !important;
     color: #1864AB !important;
-    border: 1.5px solid #74C0FC !important;
-    box-shadow: 0 2px 6px rgba(51, 154, 240, 0.35);
+    border: 2px solid #4DABF7 !important;
+    box-shadow: 0 2px 8px rgba(51, 154, 240, 0.45);
 }
-.theme-blue .focus-ruby rt {
+.theme-blue .today-focus-ruby rt {
     color: #1864AB !important;
-    font-weight: 700;
+    font-weight: 800;
+}
+
+/* Today's Star tag in text */
+.today-star-tag {
+    font-size: 0.72rem;
+    color: #FF922B;
+    margin-right: 1px;
+    vertical-align: super;
+    line-height: 0;
+    user-select: none;
+    display: inline-block;
+}
+
+/* 📜 2. 往日生字 / 之前已学重点 (Previous / History Focus Words - Calm Lavender, Dashed Border) */
+.is-prev-focus-word {
+    background: #EDE7F6 !important;
+    color: #5E35B1 !important;
+    border: 1.5px dashed #B39DDB !important;
+    box-shadow: 0 1px 3px rgba(103, 58, 183, 0.12);
+    font-weight: 600 !important;
+}
+.prev-focus-ruby rt {
+    color: #7E57C2 !important;
+    font-weight: 600;
 }
 
 /* Color dot picker controls */
@@ -1574,15 +1629,70 @@ rt {
 .color-dot-green { background: #69DB7C; }
 .color-dot-blue { background: #4DABF7; }
 
-/* Focus Counter Badge */
-.focus-words-counter-badge {
-    font-size: 0.85rem;
-    color: #D9480F;
-    background: #FFF9DB;
+/* Focus Stats Pill & Action Buttons */
+.focus-words-stats-pill {
+    font-size: 0.84rem;
+    color: #455A64;
+    background: #ECEFF1;
+    padding: 3px 12px;
+    border-radius: 14px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #CFD8DC;
+}
+
+.focus-chips-action-bar {
+    margin-bottom: 0.6rem;
+    padding: 0.35rem 0.6rem;
+    background: #FAFAFA;
+    border-radius: 8px;
+    border: 1px solid #ECEFF1;
+}
+
+.chip-mini-action-btn {
+    background: #FFFFFF;
+    border: 1px solid #B0BEC5;
+    color: #455A64;
+    font-size: 0.78rem;
     padding: 2px 8px;
     border-radius: 12px;
-    border: 1px solid #FFE066;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.15s ease;
+}
+.chip-mini-action-btn:hover {
+    background: #ECEFF1;
+    color: #263238;
+}
+
+/* Distinct chip styles for Today vs Previous */
+.focus-word-chip.is-today-chip {
+    background: #FFF9DB !important;
+    border: 1.5px solid #FF922B !important;
+    color: #D9480F !important;
     font-weight: 700;
+    box-shadow: 0 2px 6px rgba(255, 146, 43, 0.22);
+}
+
+.focus-word-chip.is-prev-chip {
+    background: #F3E5F5 !important;
+    border: 1px dashed #BA68C8 !important;
+    color: #6A1B9A !important;
+    font-weight: 500;
+    opacity: 0.95;
+}
+
+.chip-today-toggle-btn {
+    cursor: pointer;
+    font-size: 0.88rem;
+    margin-right: 3px;
+    transition: transform 0.15s ease;
+    user-select: none;
+}
+.chip-today-toggle-btn:hover {
+    transform: scale(1.25);
 }
 
 .mark-mode-hint-banner {

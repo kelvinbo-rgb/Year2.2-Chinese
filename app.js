@@ -191,7 +191,32 @@ function saveFocusWords(lessonIndex, words) {
     }
 }
 
-function addFocusWord(lessonIndex, word) {
+function getTodayFocusWords(lessonIndex) {
+    try {
+        const raw = localStorage.getItem('today_focus_words_' + lessonIndex);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+                const allWords = getFocusWords(lessonIndex);
+                return parsed.map(w => (w || '').trim()).filter(w => w.length > 0 && allWords.includes(w));
+            }
+        }
+    } catch (e) {
+        console.error("Error reading today focus words:", e);
+    }
+    return [];
+}
+
+function saveTodayFocusWords(lessonIndex, words) {
+    try {
+        const unique = Array.from(new Set((words || []).map(w => (w || '').trim()).filter(w => w.length > 0)));
+        localStorage.setItem('today_focus_words_' + lessonIndex, JSON.stringify(unique));
+    } catch (e) {
+        console.error("Error saving today focus words:", e);
+    }
+}
+
+function addFocusWord(lessonIndex, word, isToday = true) {
     const cleanWord = (word || '').trim().replace(/[，。！？!?、；;:：“”‘’（）\s]/g, '');
     if (!cleanWord) return;
     const current = getFocusWords(lessonIndex);
@@ -199,22 +224,47 @@ function addFocusWord(lessonIndex, word) {
         current.push(cleanWord);
         saveFocusWords(lessonIndex, current);
     }
+    if (isToday) {
+        const todayWords = getTodayFocusWords(lessonIndex);
+        if (!todayWords.includes(cleanWord)) {
+            todayWords.push(cleanWord);
+            saveTodayFocusWords(lessonIndex, todayWords);
+        }
+    }
 }
 
 function removeFocusWord(lessonIndex, word) {
     const cleanWord = (word || '').trim();
     const current = getFocusWords(lessonIndex).filter(w => w !== cleanWord);
     saveFocusWords(lessonIndex, current);
+    const todayWords = getTodayFocusWords(lessonIndex).filter(w => w !== cleanWord);
+    saveTodayFocusWords(lessonIndex, todayWords);
 }
 
 function toggleFocusWord(lessonIndex, word) {
     const cleanWord = (word || '').trim();
     if (!cleanWord) return;
     const current = getFocusWords(lessonIndex);
-    if (current.includes(cleanWord)) {
-        removeFocusWord(lessonIndex, cleanWord);
+    const todayWords = getTodayFocusWords(lessonIndex);
+    if (!current.includes(cleanWord)) {
+        addFocusWord(lessonIndex, cleanWord, true);
+    } else if (!todayWords.includes(cleanWord)) {
+        todayWords.push(cleanWord);
+        saveTodayFocusWords(lessonIndex, todayWords);
     } else {
-        addFocusWord(lessonIndex, cleanWord);
+        removeFocusWord(lessonIndex, cleanWord);
+    }
+}
+
+function toggleTodayFocusWord(lessonIndex, word) {
+    const cleanWord = (word || '').trim();
+    if (!cleanWord) return;
+    const todayWords = getTodayFocusWords(lessonIndex);
+    if (todayWords.includes(cleanWord)) {
+        saveTodayFocusWords(lessonIndex, todayWords.filter(w => w !== cleanWord));
+    } else {
+        todayWords.push(cleanWord);
+        saveTodayFocusWords(lessonIndex, todayWords);
     }
 }
 
@@ -257,13 +307,17 @@ function checkUrlSync() {
             if (Array.isArray(data.w)) {
                 saveFocusWords(lessonIdx, data.w);
             }
+            if (Array.isArray(data.tw)) {
+                saveTodayFocusWords(lessonIdx, data.tw);
+            }
             if (data.st) currentStoryType = data.st;
             if (typeof data.sd === 'number') storyVariantSeed = data.sd;
 
             if (typeof data.s === 'string' && data.s.trim().length > 0) {
                 saveCustomStory(lessonIdx, data.s);
             } else {
-                const story = generateDynamicStory(lessonIdx, data.w || [], currentStoryType, storyVariantSeed);
+                const storyWords = Array.isArray(data.tw) && data.tw.length > 0 ? data.tw : (data.w || []);
+                const story = generateDynamicStory(lessonIdx, storyWords, currentStoryType, storyVariantSeed);
                 saveCustomStory(lessonIdx, story);
             }
 
@@ -272,7 +326,9 @@ function checkUrlSync() {
             window.history.replaceState({}, document.title, cleanUrl);
 
             const lessonTitle = lessonData[lessonIdx]?.title || `第 ${lessonIdx + 1} 课`;
-            alert(`🎉 恭喜！重点字词库扫码同步成功！\n\n已成功导入【${lessonTitle}】的 ${data.w?.length || 0} 个重点词与专属小故事。\n现在可以开始学习啦！`);
+            const todayCount = Array.isArray(data.tw) ? data.tw.length : 0;
+            const totalCount = data.w?.length || 0;
+            alert(`🎉 恭喜！重点字词库扫码同步成功！\n\n已成功导入【${lessonTitle}】重点词（⭐ 今日必学 ${todayCount} 个 / 📜 往日生字 ${totalCount - todayCount} 个）与专属小故事。\n现在可以开始学习啦！`);
 
             currentLessonIndex = lessonIdx;
             renderLessonView(lessonIdx);
@@ -767,14 +823,19 @@ function renderLessonList() {
 // ================= Focus Words Bank Rendering =================
 function renderFocusWordsBank(lessonIndex) {
     const container = document.getElementById('focus-words-chips-container');
-    const countEl = document.getElementById('focus-words-count');
+    const todayCountEl = document.getElementById('today-words-count');
+    const prevCountEl = document.getElementById('prev-words-count');
     if (!container) return;
 
-    const words = getFocusWords(lessonIndex);
-    if (countEl) countEl.textContent = words.length;
+    const allWords = getFocusWords(lessonIndex);
+    const todayWords = getTodayFocusWords(lessonIndex);
+    const prevWords = allWords.filter(w => !todayWords.includes(w));
+
+    if (todayCountEl) todayCountEl.textContent = todayWords.length;
+    if (prevCountEl) prevCountEl.textContent = prevWords.length;
     container.innerHTML = '';
 
-    if (words.length === 0) {
+    if (allWords.length === 0) {
         container.innerHTML = `
             <span style="font-size:0.85rem; color:#90A4AE; font-style:italic;">
                 暂无重点词。可点击上方【✏️ 圈选生字词】直接点选课文，或点击
@@ -788,7 +849,7 @@ function renderFocusWordsBank(lessonIndex) {
             importBtn.addEventListener('click', () => {
                 const chars = (lessonData[lessonIndex].chars || '').split('');
                 chars.forEach(c => {
-                    if (c) addFocusWord(lessonIndex, c);
+                    if (c) addFocusWord(lessonIndex, c, true);
                 });
                 renderLessonView(lessonIndex);
             });
@@ -796,24 +857,74 @@ function renderFocusWordsBank(lessonIndex) {
         return;
     }
 
-    words.forEach(word => {
+    // Quick Action Bar above chips
+    const actionBar = document.createElement('div');
+    actionBar.className = 'focus-chips-action-bar';
+    actionBar.innerHTML = `
+        <div style="font-size:0.8rem; color:#607D8B; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap;">
+            <span>💡 点击 <b>⭐/☆</b> 可自由设为今日或往日；点击汉字可发音：</span>
+            <div style="display:flex; gap:0.4rem;">
+                <button id="btn-clear-today-focus" class="chip-mini-action-btn" title="将所有词归入之前生字，方便今天挑选几个新字">🧹 清空今日标记</button>
+                <button id="btn-all-today-focus" class="chip-mini-action-btn" title="将全部重点词设为今日学习">⭐ 全部设为今日</button>
+            </div>
+        </div>
+    `;
+    container.appendChild(actionBar);
+
+    const clearTodayBtn = actionBar.querySelector('#btn-clear-today-focus');
+    if (clearTodayBtn) {
+        clearTodayBtn.onclick = () => {
+            saveTodayFocusWords(lessonIndex, []);
+            renderLessonView(lessonIndex);
+        };
+    }
+    const allTodayBtn = actionBar.querySelector('#btn-all-today-focus');
+    if (allTodayBtn) {
+        allTodayBtn.onclick = () => {
+            saveTodayFocusWords(lessonIndex, allWords);
+            renderLessonView(lessonIndex);
+        };
+    }
+
+    // Chips Container (Today's words first, then Previous words)
+    const chipsWrapper = document.createElement('div');
+    chipsWrapper.style.display = 'flex';
+    chipsWrapper.style.flexWrap = 'wrap';
+    chipsWrapper.style.gap = '0.5rem';
+    chipsWrapper.style.marginTop = '0.4rem';
+
+    const orderedWords = [...todayWords, ...prevWords];
+
+    orderedWords.forEach(word => {
+        const isToday = todayWords.includes(word);
         const chip = document.createElement('span');
-        chip.className = 'focus-word-chip';
+        chip.className = `focus-word-chip ${isToday ? 'is-today-chip' : 'is-prev-chip'}`;
         chip.innerHTML = `
-            <span>${word}</span>
-            <span class="chip-del-btn" title="移出重点词" data-word="${word}">&times;</span>
+            <span class="chip-today-toggle-btn" title="${isToday ? '点击转为之前生字' : '点击设为今日重点'}">
+                ${isToday ? '⭐' : '☆'}
+            </span>
+            <span class="chip-word-text">${word}</span>
+            <span class="chip-del-btn" title="移出词库" data-word="${word}">&times;</span>
         `;
+
         chip.addEventListener('click', (e) => {
             if (e.target.classList.contains('chip-del-btn')) {
                 e.stopPropagation();
                 removeFocusWord(lessonIndex, word);
                 renderLessonView(lessonIndex);
+            } else if (e.target.classList.contains('chip-today-toggle-btn')) {
+                e.stopPropagation();
+                toggleTodayFocusWord(lessonIndex, word);
+                renderLessonView(lessonIndex);
             } else {
                 speakChinese(word, 0.75);
             }
         });
-        container.appendChild(chip);
+
+        chipsWrapper.appendChild(chip);
     });
+
+    container.appendChild(chipsWrapper);
 }
 
 // ================= Lesson Detail View =================
@@ -919,7 +1030,7 @@ function renderLessonView(lessonIndex) {
             <div class="focus-words-header">
                 <div class="focus-words-title">
                     <span>⭐ 本课重点生字词</span>
-                    <span class="focus-words-counter-badge">(今日必学 <b id="focus-words-count">0</b> 个)</span>
+                    <span class="focus-words-stats-pill">⭐ 今日新选 <b id="today-words-count">0</b> 个 | 📜 之前生字 <b id="prev-words-count">0</b> 个</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
                     <div class="color-picker-group">
@@ -970,22 +1081,36 @@ function renderLessonView(lessonIndex) {
     // Render Focus Words Bank Chips
     renderFocusWordsBank(lessonIndex);
 
-    // Render Article with Ruby Pinyin & Focus Highlights
+    // Render Article with Ruby Pinyin & Focus Highlights (differentiating today vs previous words)
     renderArticleBody(document.getElementById('article-body'), text, {
         lessonIndex: lessonIndex,
-        clozeMode: currentClozeMode
+        clozeMode: currentClozeMode,
+        todayWords: getTodayFocusWords(lessonIndex)
     });
 
-    // Render Lesson Chars Grid with Today's Focus Card Highlight
+    // Render Lesson Chars Grid with Today's Focus Card Highlight vs Previous Focus Card
     const charGrid = document.getElementById('char-grid');
     const activeFocusWords = getFocusWords(lessonIndex);
+    const todayWords = getTodayFocusWords(lessonIndex);
     lesson.chars.split('').forEach(char => {
         const card = document.createElement('div');
-        const isTodayFocus = activeFocusWords.some(w => w.includes(char));
-        card.className = `char-card ${isTodayFocus ? 'is-today-focus-card' : ''}`;
+        const isTodayFocus = todayWords.some(w => w.includes(char));
+        const isPrevFocus = !isTodayFocus && activeFocusWords.some(w => w.includes(char));
+
+        let cardClass = 'char-card';
+        let badgeHtml = '';
+        if (isTodayFocus) {
+            cardClass += ' is-today-focus-card';
+            badgeHtml = '<span class="today-focus-card-badge">⭐ 今日必学</span>';
+        } else if (isPrevFocus) {
+            cardClass += ' is-prev-focus-card';
+            badgeHtml = '<span class="prev-focus-card-badge">✓ 往日已学</span>';
+        }
+
+        card.className = cardClass;
         const py = window.pinyinPro ? window.pinyinPro.pinyin(char) : '';
         card.innerHTML = `
-            ${isTodayFocus ? '<span class="today-focus-card-badge">⭐ 今日必学</span>' : ''}
+            ${badgeHtml}
             <div class="char-card-char">${char}</div>
             <div class="char-card-pinyin">${py}</div>
         `;
@@ -1148,6 +1273,7 @@ function renderArticleBody(container, text, options = {}) {
     const lessonIndex = options.lessonIndex !== undefined ? options.lessonIndex : currentLessonIndex;
     const clozeMode = options.clozeMode || currentClozeMode || 'normal';
     const focusWords = options.focusWords || getFocusWords(lessonIndex);
+    const todayWords = options.todayWords || getTodayFocusWords(lessonIndex);
 
     container.innerHTML = '';
     const paragraphs = text.split('\n');
@@ -1172,7 +1298,7 @@ function renderArticleBody(container, text, options = {}) {
 
             // Generate characters with Ruby & prepend a play badge
             sentSpan.innerHTML = `<span class="sentence-play-tag" title="从此句开始朗读">▶</span>` +
-                generateRubyHtmlForSentence(sent.trim(), focusWords, clozeMode);
+                generateRubyHtmlForSentence(sent.trim(), focusWords, clozeMode, todayWords);
 
             // 1. Interaction for Masked Pinyin Bubble in 'hide-pinyin' mode
             sentSpan.querySelectorAll('.masked-pinyin-bubble').forEach(rt => {
@@ -1228,7 +1354,7 @@ function renderArticleBody(container, text, options = {}) {
     });
 }
 
-function generateRubyHtmlForSentence(sentence, focusWords = [], clozeMode = 'normal') {
+function generateRubyHtmlForSentence(sentence, focusWords = [], clozeMode = 'normal', todayWords = []) {
     // Filter non-empty words and sort descending by length to match longest phrase first
     const sortedWords = (focusWords || [])
         .map(w => (w || '').trim())
@@ -1258,16 +1384,21 @@ function generateRubyHtmlForSentence(sentence, focusWords = [], clozeMode = 'nor
     let html = '';
     segments.forEach(seg => {
         if (seg.isFocus) {
+            const isToday = (todayWords || []).includes(seg.text);
+            const focusClass = isToday ? 'is-focus-word is-today-focus-word' : 'is-focus-word is-prev-focus-word';
+            const rubyClass = isToday ? 'today-focus-ruby' : 'prev-focus-ruby';
+
             for (let c = 0; c < seg.text.length; c++) {
                 const char = seg.text[c];
                 if (/[\u4e00-\u9fa5]/.test(char)) {
                     const py = window.pinyinPro ? window.pinyinPro.pinyin(char) : '';
                     if (clozeMode === 'hide-pinyin') {
-                        html += `<ruby class="focus-ruby"><span class="py-char-span is-focus-word" data-char="${char}">${char}</span><rt class="masked-pinyin-bubble" data-char="${char}" data-pinyin="${py}" data-word="${seg.text}" title="点击答题或揭晓读音">?</rt></ruby>`;
+                        html += `<ruby class="${rubyClass}"><span class="py-char-span ${focusClass}" data-char="${char}">${char}</span><rt class="masked-pinyin-bubble" data-char="${char}" data-pinyin="${py}" data-word="${seg.text}" title="点击答题或揭晓读音">?</rt></ruby>`;
                     } else if (clozeMode === 'hide-hanzi') {
-                        html += `<ruby class="focus-ruby"><span class="py-char-span masked-hanzi-box" data-char="${char}" data-pinyin="${py}" data-word="${seg.text}" title="点击手写或揭晓汉字">🔲</span><rt class="revealed-pinyin">${py}</rt></ruby>`;
+                        html += `<ruby class="${rubyClass}"><span class="py-char-span masked-hanzi-box" data-char="${char}" data-pinyin="${py}" data-word="${seg.text}" title="点击手写或揭晓汉字">🔲</span><rt class="revealed-pinyin">${py}</rt></ruby>`;
                     } else {
-                        html += `<ruby class="focus-ruby"><span class="py-char-span is-focus-word" data-char="${char}" data-word="${seg.text}" title="重点字词">${char}</span><rt>${py}</rt></ruby>`;
+                        const starTag = (isToday && c === 0) ? '<span class="today-star-tag" title="今日重点">⭐</span>' : '';
+                        html += `<ruby class="${rubyClass}">${starTag}<span class="py-char-span ${focusClass}" data-char="${char}" data-word="${seg.text}" title="${isToday ? '⭐ 今日重点新字词' : '✓ 往日已学字词'}">${char}</span><rt>${py}</rt></ruby>`;
                     }
                 } else {
                     html += `<span class="punct-span">${char}</span>`;
@@ -2033,15 +2164,23 @@ function openStoryModal(lessonIndex) {
     stopStoryPlayback();
 
     const words = getFocusWords(lessonIndex);
+    const todayWords = getTodayFocusWords(lessonIndex);
+    const activeWordsForStory = todayWords.length > 0 ? todayWords : words;
+
     if (storyFocusWordsChips) {
-        storyFocusWordsChips.innerHTML = words.length > 0 ?
-            words.map(w => `<span class="focus-word-chip" style="font-size:0.85rem; padding:0.2rem 0.5rem;">${w}</span>`).join(' ') :
-            '<span style="color:#90A4AE; font-size:0.85rem;">(本课暂未圈选生词，可点击【自由创编】直接撰写小故事)</span>';
+        if (words.length > 0) {
+            storyFocusWordsChips.innerHTML = words.map(w => {
+                const isToday = todayWords.includes(w);
+                return `<span class="focus-word-chip ${isToday ? 'is-today-chip' : 'is-prev-chip'}" style="font-size:0.85rem; padding:0.2rem 0.5rem;">${isToday ? '⭐ ' : ''}${w}</span>`;
+            }).join(' ');
+        } else {
+            storyFocusWordsChips.innerHTML = '<span style="color:#90A4AE; font-size:0.85rem;">(本课暂未圈选生词，可点击【自由创编】直接撰写小故事)</span>';
+        }
     }
 
     currentStoryText = getCustomStory(lessonIndex);
     if (!currentStoryText) {
-        currentStoryText = generateDynamicStory(lessonIndex, words, currentStoryType, storyVariantSeed);
+        currentStoryText = generateDynamicStory(lessonIndex, activeWordsForStory, currentStoryType, storyVariantSeed);
     }
 
     updateStoryTypeButtons();
@@ -2069,11 +2208,13 @@ function updateStoryClozeButtons() {
 function renderStoryContent(lessonIndex) {
     if (!storyArticleBody) return;
     const words = getFocusWords(lessonIndex);
+    const todayWords = getTodayFocusWords(lessonIndex);
 
     renderArticleBody(storyArticleBody, currentStoryText, {
         lessonIndex: lessonIndex,
         clozeMode: storyClozeMode,
-        focusWords: words
+        focusWords: words,
+        todayWords: todayWords
     });
 }
 
@@ -2150,7 +2291,9 @@ if (btnStoryTypeMicro) {
         currentStoryType = 'story';
         updateStoryTypeButtons();
         const words = getFocusWords(currentLessonIndex);
-        currentStoryText = generateDynamicStory(currentLessonIndex, words, currentStoryType, storyVariantSeed);
+        const todayWords = getTodayFocusWords(currentLessonIndex);
+        const activeWords = todayWords.length > 0 ? todayWords : words;
+        currentStoryText = generateDynamicStory(currentLessonIndex, activeWords, currentStoryType, storyVariantSeed);
         saveCustomStory(currentLessonIndex, currentStoryText);
         if (storyEditorContainer) storyEditorContainer.style.display = 'none';
         renderStoryContent(currentLessonIndex);
@@ -2162,7 +2305,9 @@ if (btnStoryTypeSentences) {
         currentStoryType = 'sentences';
         updateStoryTypeButtons();
         const words = getFocusWords(currentLessonIndex);
-        currentStoryText = generateDynamicStory(currentLessonIndex, words, currentStoryType, storyVariantSeed);
+        const todayWords = getTodayFocusWords(currentLessonIndex);
+        const activeWords = todayWords.length > 0 ? todayWords : words;
+        currentStoryText = generateDynamicStory(currentLessonIndex, activeWords, currentStoryType, storyVariantSeed);
         saveCustomStory(currentLessonIndex, currentStoryText);
         if (storyEditorContainer) storyEditorContainer.style.display = 'none';
         renderStoryContent(currentLessonIndex);
@@ -2173,7 +2318,9 @@ if (btnAiGenStory) {
     btnAiGenStory.onclick = () => {
         storyVariantSeed++;
         const words = getFocusWords(currentLessonIndex);
-        currentStoryText = generateDynamicStory(currentLessonIndex, words, currentStoryType, storyVariantSeed);
+        const todayWords = getTodayFocusWords(currentLessonIndex);
+        const activeWords = todayWords.length > 0 ? todayWords : words;
+        currentStoryText = generateDynamicStory(currentLessonIndex, activeWords, currentStoryType, storyVariantSeed);
         saveCustomStory(currentLessonIndex, currentStoryText);
         if (storyEditorContainer) storyEditorContainer.style.display = 'none';
         renderStoryContent(currentLessonIndex);
@@ -2221,17 +2368,19 @@ function openSyncModal(lessonIndex) {
     syncModal.classList.remove('hidden');
 
     const words = getFocusWords(lessonIndex);
+    const todayWords = getTodayFocusWords(lessonIndex);
     const lesson = lessonData[lessonIndex];
 
     // Always update summary badge immediately so user sees what is being synced
     if (syncSummaryBadge) {
         const title = lesson ? lesson.title : `第 ${lessonIndex + 1} 课`;
-        syncSummaryBadge.textContent = `第 ${lessonIndex + 1} 课《${title}》· 已选 ${words.length} 个重点词`;
+        syncSummaryBadge.textContent = `第 ${lessonIndex + 1} 课《${title}》· ⭐今日 ${todayWords.length} 个 / 📜往日 ${words.length - todayWords.length} 个`;
     }
 
     // Determine payload: keep it lightweight so QR code is crisp and instant to scan
+    const activeWords = todayWords.length > 0 ? todayWords : words;
     const customStory = getCustomStory(lessonIndex);
-    const generatedStory = generateDynamicStory(lessonIndex, words, currentStoryType, storyVariantSeed);
+    const generatedStory = generateDynamicStory(lessonIndex, activeWords, currentStoryType, storyVariantSeed);
     const isCustomEdited = customStory && customStory.trim().length > 0 && customStory.trim() !== generatedStory.trim();
 
     const payload = {
@@ -2239,6 +2388,7 @@ function openSyncModal(lessonIndex) {
         v: 2,
         l: lessonIndex,
         w: words,
+        tw: todayWords,
         st: currentStoryType,
         sd: storyVariantSeed
     };
